@@ -1,1 +1,296 @@
-{}
+{
+ "research_topic": "小規模計算資源での training-free NAS の再検証。NAS-Bench-201 の探索空間上で複数の zero-cost proxy の順位一貫性を実測し、単体 proxy と順位集約（多数決・一様 Borda・提案の重み付き Borda）を比較する。アーキテクチャの学習は一切行わず、真の精度は表形式ベンチマークの公表値を参照する。GPU は proxy 計算（1 ミニバッチの forward/backward）にのみ使用する。評価指標は外部の固定された評価層 airas-eval の nas_pre_training タスクで算出し、実験コードは指標を一切計算しない。",
+ "queries": [
+  "zero-cost proxy NAS",
+  "training-free neural architecture search",
+  "zero-cost proxy reliability",
+  "NAS-Bench-201 NATS-Bench"
+ ],
+ "research_study_list": [
+  {
+   "title": "Zero-Cost Proxies for Lightweight NAS",
+   "abstract": "Neural Architecture Search (NAS) is quickly becoming the standard methodology to design neural network models. However, NAS is typically compute-intensive because multiple models need to be evaluated before choosing the best one. To reduce the computational power and time needed, a proxy task is often used for evaluating each model instead of full training. In this paper, we evaluate conventional reduced-training proxies and quantify how well they preserve ranking between multiple models during search when compared with the rankings produced by final trained accuracy. We propose a series of zero-cost proxies, based on recent pruning literature, that use just a single minibatch of training data to compute a model's score. Our zero-cost proxies use 3 orders of magnitude less computation but can match and even outperform conventional proxies.",
+   "meta_data": {
+    "arxiv_id": "2101.08134",
+    "doi": "10.48550/arxiv.2101.08134",
+    "authors": [
+     "Mohamed S. Abdelfattah",
+     "Abhinav Mehrotra",
+     "Lukasz Dudziak",
+     "Nicholas D. Lane"
+    ],
+    "published_date": "2021-01-20",
+    "venue": "ICLR 2021",
+    "pdf_url": "https://arxiv.org/pdf/2101.08134",
+    "github_url": "https://github.com/mohsaied/zero-cost-nas",
+    "citation_count": 66
+   },
+   "llm_extracted_info": {
+    "main_contributions": "枝刈り(pruning-at-initialization)の saliency 指標をネットワーク全体のスコアに拡張し、6 種の zero-cost proxy (grad_norm, snip, grasp, fisher, synflow, jacob_cov) として NAS の評価フェーズに導入した。従来の reduced-training proxy (EcoNAS) と大規模に比較し、3 桁少ない計算量で同等以上の順位保存性を示した。さらに 3 指標の多数決 (vote) を提案。",
+    "methodology": "1 ミニバッチのデータで forward/backward を 1 回だけ行い、パラメータ単位の saliency をネットワーク全体で総和してスコア化する。snip は |∂L/∂θ ⊙ θ|、grasp は -(H ∂L/∂θ) ⊙ θ、synflow は ∂L/∂θ ⊙ θ（損失を全パラメータの積とするためデータ不要）、fisher は活性チャネル単位の (∂L/∂z · z)^2 を全層で集約。jacob_cov は Mellor らの指標を流用。評価は最終テスト精度に対する Spearman 順位相関 ρ。",
+    "experimental_setup": "NAS-Bench-201 の全 15,625 モデルを CIFAR-10 / CIFAR-100 / ImageNet16-120 の 3 データセットで評価。加えて NAS-Bench-101 (423k)、NAS-Bench-NLP (14k)、NAS-Bench-ASR (8,242)、PyTorchCV (約 50〜200 モデル) でも検証。EcoNAS 比較では入力解像度 r・stem チャネル数 c・エポック数 e を振った (r8c4e20 = econas, r16c8e15 = econas+) 縮小学習を基準とする。GPU は Nvidia GeForce GTX 1080 Ti。NAS への統合は random search / REINFORCE / aging evolution / binary predictor に対する zero-cost warmup と move proposal の 2 方式、各 32 回試行。",
+    "results": "NAS-Bench-201 の Spearman ρ: grad_norm 0.58/0.64/0.58, snip 0.58/0.63/0.58, grasp 0.48/0.54/0.56, fisher 0.36/0.39/0.33, synflow 0.74/0.76/0.75, jacob_cov 0.73/0.71/0.71, vote 0.82/0.83/0.82 (CIFAR-10 / CIFAR-100 / ImageNet16-120)。EcoNAS は 0.61、econas+ は 0.80。他の探索空間では大きく低下し、NAS-Bench-101 で synflow 0.37、NAS-Bench-NLP 0.34、NAS-Bench-ASR 0.40。",
+    "limitations": "探索空間を変えると順位相関が大きく崩れる（NAS-Bench-201 の約 0.8 に対し他ベンチマークでは約 0.3〜0.4）。jacob_cov は同一探索空間内では有効だが PyTorchCV のような異種モデル集合では失敗し、grasp も同様に破綻する。指標が「なぜ効くか」の説明は本論文では扱っていない。",
+    "future_research_directions": "探索空間をまたいで一貫して効く指標の設計、複数指標の非自明な組み合わせ方、上位モデル間の局所的な順位保存性の改善。",
+    "experimental_code": "https://github.com/mohsaied/zero-cost-nas",
+    "experimental_info": "本研究の zero-cost proxy 実装（grad_norm, snip, grasp, fisher, synflow, jacob_cov）はこのリポジトリで公開されており、再利用可能。"
+   }
+  },
+  {
+   "title": "Neural Architecture Search without Training",
+   "abstract": "NAS algorithms tend to be slow and expensive; they need to train vast numbers of candidate networks to inform the search process. In this work, we examine the overlap of activations between datapoints in untrained networks and motivate how this can give a measure which is usefully indicative of a network's trained performance. We incorporate this measure into a simple algorithm that allows us to search for powerful networks without any training in a matter of seconds on a single GPU.",
+   "meta_data": {
+    "arxiv_id": "2006.04647",
+    "doi": "10.48550/arxiv.2006.04647",
+    "authors": [
+     "Joseph Mellor",
+     "Jack Turner",
+     "Amos Storkey",
+     "Elliot J. Crowley"
+    ],
+    "published_date": "2020-06-08",
+    "venue": "ICML 2021",
+    "pdf_url": "https://arxiv.org/pdf/2006.04647",
+    "github_url": "https://github.com/BayesWatch/nas-without-training",
+    "citation_count": 43
+   },
+   "llm_extracted_info": {
+    "main_contributions": "未学習ネットワークにおける ReLU の活性パターン（線形領域）の重なりからネットワークを採点する指標を提案し、学習を一切行わない探索アルゴリズム NASWOT を構成した。後に nwot という名前で標準的な zero-cost proxy の一つとなる。",
+    "methodology": "ミニバッチ X = {x_i} を未学習ネットワークに通し、各入力に対する ReLU ユニットの on/off をバイナリコード c_i とする。コード間のハミング距離 d_H から カーネル行列 K_H (成分 N_A - d_H(c_i,c_j), N_A は ReLU 総数) を作り、スコアを s = log|K_H| と定義する。トレースが同じなら対角に近い（＝入力どうしの線形領域が分離している）ほどスコアが高い。NASWOT は探索空間から N 個をランダムサンプルし、学習せずにスコア最大のものを返す。",
+    "experimental_setup": "NAS-Bench-101 (423,624)、NAS-Bench-201 (15,625)、NATS-Bench SSS (32,768)、NDS (AmoebaNet / DARTS / ENAS / NASNet / PNAS) で評価。多くの場合 1000 ネットワークをサンプルし、Kendall の tau で最終検証精度との相関を測る。ミニバッチサイズは既定 128。探索は 500 回試行（重み共有手法は 3 回）、GPU は 1080Ti 1 枚。アブレーションとして (a) ミニバッチの選び方、(b) 正規乱数入力、(c) 初期化シード、(d) ミニバッチサイズ 32/64/128/256 の影響を各 20 サンプルで検証。",
+    "results": "Kendall tau: NAS-Bench-201 CIFAR-10 0.574 / CIFAR-100 0.611 / ImageNet16-120 0.549、NAS-Bench-101 CIFAR-10 0.285、NDS-DARTS 0.467、NDS-ENAS 0.365、NDS-NASNet 0.304、NDS-PNAS 0.382、NDS-Amoeba 0.223。NAS-Bench-201 で CIFAR-10 92.81% を 30 秒で発見。NAS-Bench-101 では NASWOT(N=100) が 23 秒で 91.77±0.05%（REA は 12000 秒で 93.87±0.22%、ランダム選択は 90.38±5.51%）。スコアはミニバッチ・初期化の違いに対して順位が概ね頑健。",
+    "limitations": "探索空間によって相関が大きく変動する（NDS-Amoeba では tau 0.223 まで低下）。REA など学習を伴う手法には最終精度で及ばない（NAS-Bench-101 でランダムと REA のほぼ中間）。スコアはミニバッチサイズに依存して絶対値がスケールするため、異なるバッチサイズ間の直接比較はできない。ReLU 型ネットワークを前提とする。",
+    "future_research_directions": "既存の高コスト探索手法への統合（本論文では REA の初期集団選定 AREA として例示）、より難しいデータセットへの拡張。",
+    "experimental_code": "https://github.com/BayesWatch/nas-without-training",
+    "experimental_info": "NASWOT のスコア計算と探索の実装が公開されており再利用可能。"
+   }
+  },
+  {
+   "title": "NAS-Bench-Suite-Zero: Accelerating Research on Zero Cost Proxies",
+   "abstract": "In this work, we create NAS-Bench-Suite-Zero: we evaluate 13 ZC proxies across 28 tasks, creating by far the largest dataset (and unified codebase) for ZC proxies. We run a large-scale analysis of ZC proxies, including a bias analysis, and the first information-theoretic analysis which concludes that ZC proxies capture substantial complementary information.",
+   "meta_data": {
+    "arxiv_id": "2210.03230",
+    "doi": "10.48550/arxiv.2210.03230",
+    "authors": [
+     "Arjun Krishnakumar",
+     "Colin White",
+     "Arber Zela",
+     "Renbo Tu",
+     "Mahmoud Safari",
+     "Frank Hutter"
+    ],
+    "published_date": "2022-10-06",
+    "venue": "NeurIPS 2022 Datasets and Benchmarks",
+    "pdf_url": "https://arxiv.org/pdf/2210.03230",
+    "github_url": "https://github.com/automl/naslib/tree/zerocost",
+    "citation_count": 13
+   },
+   "llm_extracted_info": {
+    "main_contributions": "13 種の zero-cost proxy を単一コードベース (NASLib) で実装し、28 タスク・計 152 万回の proxy 評価を事前計算したデータセットを公開。実装差という交絡を排したうえで、汎化性・バイアス・相互情報量の大規模解析を行い、ZC proxy が互いに補完的な情報を持つことを初めて情報理論的に示した。バイアス低減による改善手続きと、13 proxy を NAS の代理モデルに組み込む方法を提案。",
+    "methodology": "全 proxy を NASLib 上で原著の既定実装のまま統一。各ベンチマークで 1000 アーキテクチャをランダム抽出し、proxy 値と検証精度の Spearman 順位相関を算出。ベンチマーク間の類似度は proxy スコアの Pearson 相関で測る。補完性は検証精度 y と proxy 値 z_i を確率変数とみなした条件付きエントロピー H(y|z_i, z_j) と情報利得 H(y|z_i) - H(y|z_i,...,z_k) で定量化（1000 アーキテクチャ、24 ビンのヒストグラム）。",
+    "experimental_setup": "対象 proxy 13 種: epe_nas, fisher, flops, grad_norm, grasp, l2_norm, jacov, nwot, params, plain, snip, synflow, zen。探索空間・タスクは NAS-Bench-101 (CIFAR-10)、NAS-Bench-201 (CIFAR-10 / CIFAR-100 / ImageNet16-120)、NAS-Bench-301 (CIFAR-10)、TransNAS-Bench-101 Micro/Macro (7 タスク)、および Spherical-CIFAR-100 / NinaPro / SVHN を加えた計 28。バッチサイズは 64（TransNAS-Bench-101 のみメモリ制約で 32）。全 150 万評価を Intel Xeon Gold 6242 CPU で 1100 CPU 時間。事前計算テーブルの参照は 1e-5 秒で、実計算比 3 桁以上の高速化。",
+    "results": "nwot と flops が全ベンチマーク平均で最も高い順位相関。NAS-Bench-201 系ではほぼ全ての proxy が良好だが、TransNAS-Bench-101-Micro の Autoencoder / Room Layout では全 proxy が低性能。params や flops という単純な基準線が多くの設定で既存 proxy と競合する。情報理論解析では synflow と plain の組が検証精度について最も多くの情報を与える。13 proxy 全てを代理モデルに入れると予測の Spearman 相関が最大 42% 改善し、BANANAS と NPENAS の性能が向上。",
+    "limitations": "supernetwork を要する proxy や TensorFlow 実装・未公開コードの proxy は含まれていない。単独で全ベンチマークにわたり一貫して効く proxy は存在しない。事前計算値を使う場合、実時間の報告には proxy 計算時間を加算する必要がある。",
+    "future_research_directions": "バイアス（cell サイズや conv 演算数への偏り）を減らす proxy 設計、meta-learning のタスク特徴量としての ZC proxy 利用、proxy の非自明な組み合わせ方の探索。",
+    "experimental_code": "https://github.com/automl/naslib/tree/zerocost",
+    "experimental_info": "13 proxy の統一実装と、28 タスク分の事前計算済み proxy スコアが公開されている。小規模実験ではこの事前計算テーブルを参照するだけで proxy 再計算を回避できる。"
+   }
+  },
+  {
+   "title": "NAS-Bench-201: Extending the Scope of Reproducible Neural Architecture Search",
+   "abstract": "We propose an extension to NAS-Bench-101: NAS-Bench-201 with a different search space, results on multiple datasets, and more diagnostic information. The search space includes all possible architectures generated by 4 nodes and 5 associated operation options, which results in 15,625 candidates in total. The training log and the performance for each architecture candidate are provided for three datasets.",
+   "meta_data": {
+    "arxiv_id": "2001.00326",
+    "authors": [
+     "Xuanyi Dong",
+     "Yi Yang"
+    ],
+    "published_date": "2020-01-02",
+    "venue": "ICLR 2020",
+    "pdf_url": "https://arxiv.org/pdf/2001.00326",
+    "github_url": "https://github.com/D-X-Y/NAS-Bench-201"
+   },
+   "llm_extracted_info": {
+    "main_contributions": "cell を DAG として表現し、4 ノード・5 演算から生成される 15,625 アーキテクチャ全てを CIFAR-10 / CIFAR-100 / ImageNet16-120 の 3 データセットで学習・記録した表引き型ベンチマーク。NAS アルゴリズムの比較可能性の問題を緩和する。",
+    "methodology": "固定探索空間・固定学習設定で全候補を学習し、学習ログと精度を API 経由で参照可能にする。",
+    "experimental_setup": "15,625 アーキテクチャ × 3 データセット。うち非同型なものは 6,466。",
+    "results": "10 種の NAS アルゴリズムをベンチマークし、詳細な損失・精度の診断情報を提供。",
+    "limitations": "探索空間が小規模かつ画像分類に限定される。",
+    "future_research_directions": "より大きな探索空間・多様なタスクへの拡張（NATS-Bench, NAS-Bench-Suite に接続）。",
+    "experimental_code": "https://github.com/D-X-Y/NAS-Bench-201",
+    "experimental_info": "本研究の探索空間と正解精度を提供する土台。zero-cost proxy の順位相関を測る際の ground truth。"
+   }
+  },
+  {
+   "title": "AZ-NAS: Assembling Zero-Cost Proxies for Network Architecture Search",
+   "abstract": "We propose AZ-NAS, a novel approach that leverages the ensemble of various zero-cost proxies to enhance the correlation between a predicted ranking of networks and the ground truth substantially in terms of the performance. We introduce four novel zero-cost proxies that are complementary to each other, analyzing distinct traits of architectures in the views of expressivity, progressivity, trainability, and complexity, and a non-linear ranking aggregation method.",
+   "meta_data": {
+    "arxiv_id": "2403.19232",
+    "doi": "10.1109/cvpr52733.2024.00563",
+    "authors": [
+     "Junghyup Lee",
+     "Bumsub Ham"
+    ],
+    "published_date": "2024-06-16",
+    "venue": "CVPR 2024",
+    "pdf_url": "https://arxiv.org/pdf/2403.19232",
+    "citation_count": 26
+   },
+   "llm_extracted_info": {
+    "main_contributions": "expressivity / progressivity / trainability / complexity という相補的な 4 つの新規 zero-cost proxy を提案し、非線形ランク集約で統合することで、予測順位と真の性能の相関を大きく改善した。全 proxy スコアは 1 回の forward/backward で同時に得られる。",
+    "methodology": "4 指標を個別に算出し、全指標で一貫して上位に来るネットワークを強調する非線形ランク集約で統合する。",
+    "experimental_setup": "標準的な NAS ベンチマーク上で既存 training-free NAS と比較。",
+    "results": "既存手法を上回る順位相関と探索性能を、妥当な実行時間で達成。",
+    "limitations": "本文未取得のため詳細不明（abstract のみに基づく記述）。",
+    "future_research_directions": "本文未取得のため不明。",
+    "experimental_code": "",
+    "experimental_info": "abstract のみから構成。ランク集約という観点で本研究の直接の比較対象になりうる。"
+   }
+  }
+ ],
+ "research_hypothesis": {
+  "open_problems": "Abdelfattah et al. の vote は等重みの2値化多数決であり、AZ-NAS 等の集約も重みを固定している。proxy 計算時にゼロコストで得られる自己統計量——乱数シード/ミニバッチを変えた際の順位安定性（信頼性）と proxy 間の順位一致度（冗長性）——を使って、真の精度ラベルを一切使わずに proxy を重み付けする設計空間が未開拓のまま残っている。NAS-Bench-Suite-Zero は ZC proxy 間に相補情報が存在することを情報理論的に示し「非自明な組み合わせ」を将来課題としたが、閉形式の単純な集約でどこまで到達できるかは未回答である。",
+  "method": "ラベル不要の信頼性 x 多様性 重み付き順位集約（RD-WBorda）。各 proxy を 3 つの乱数シード/ミニバッチで計算し、(i) シード間順位の平均 Kendall tau を信頼性 s_p、(ii) 他 proxy のランク平均との一致度を冗長性 r_p とし、w_p ∝ max(s_p,0)*max(1-r_p,0) を L1 正規化した重みでランク平均を加重化する。重みは proxy スコア行列のみから閉形式で決まり、真の精度・アーキテクチャ学習・追加 GPU パスを一切要しない。不安定な proxy と情報が重複する proxy が自動的に減点される点が、等重みの vote・一様 Borda・固定係数の AZ-NAS 型集約との本質的差異である。proxy スコアの計算自体は先行研究の実装から変更しないため、効果は集約関数のみに帰属できる。",
+  "experimental_setup": "対象: NAS-Bench-201 探索空間から固定シード 777 で一様サンプリングした 300 アーキテクチャ、データセットは CIFAR-10 のみ。真の精度は NAS-Bench-Suite-Zero が再配布する公表テーブル（SHA-256 でピン留め）を読み取り専用で表引きし、アーキテクチャの学習は一切行わない。proxy は synflow, nwot(jacob_cov), snip, grad_norm の 4 種を batch size 128・1 ミニバッチの forward/backward 1 回で計算し、初期化 x ミニバッチの乱数シード 3 条件（0,1,2）で反復する。GPU はこの proxy 計算にのみ使用する。比較対象: (i) 単体 proxy 4 種、(ii) Abdelfattah et al. の2値化多数決 vote（無改変ベースライン）、(iii) 一様 Borda、(iv) 提案の RD-WBorda。全集約は同一シードの同一 proxy スコア行列から集約関数のみを差し替えて算出する。ランダム探索ベースラインは airas-eval の gain_over_random_search が厳密な期待値として内蔵しているため自前実装しない。評価指標は airas-eval 0.9.0 の nas_pre_training タスクに全面的に委譲し、実験コードは指標を一切計算しない。予測器ブランチ（predicted_scores + reference_scores）と探索軌跡ブランチ（evaluated_scores + evaluation_costs + search_space_scores + oracle_best）の両方を eval_inputs に書き出し、20 指標すべてを発火させる。oracle_best は全 15,625 件の公表最大値 94.68 を設計時に固定する（よく引用される 94.37 とは一致しないが、evaluated_scores と出典・単位が一致する値を採る）。統計処理はシード 3 回の平均±標準偏差。",
+  "primary_metric": "spearman_rho",
+  "supporting_metrics": [
+   "kendall_tau",
+   "spearman_rho_top_10pct",
+   "precision_at_top_10pct",
+   "selection_regret_at_1"
+  ],
+  "expected_result": "まず単体 proxy の全体 Spearman rho が先行研究の公表値（synflow 約0.74, nwot 約0.73, snip 約0.58, grad_norm 約0.58）を再現し、vote が約0.82 を再現することを健全性ゲートとして確認する。そのうえで一様 Borda が vote と同等かやや上、提案の RD-WBorda が同等以上になることを見込む。上位10%限定の spearman_rho_top_10pct と precision_at_top_10pct では、不安定な proxy が減点されることで RD-WBorda の優位がより明確に出ると予測する。差がシード標準偏差内に収まる場合、および RD-WBorda が一様 Borda に負ける場合は、『自己統計量は proxy の真の優劣を捉えられない』という負の知見として同等に報告する。健全性ゲートである公表値の再現に失敗した場合は、集約手法の比較には進まず、まず再現失敗の原因を報告する。なお 300 件では真の上位 10% が 30 件しかなく、上位10%限定の指標は標本ノイズが大きいことを併記する。",
+  "expected_conclusion": "ゼロコストで得られる自己統計量のみで proxy を重み付けするという、先行研究に存在しない集約原理の可否を小規模で検証する。同時に、評価指標を実験コードから完全に切り離し、外部の固定された評価層（airas-eval の nas_pre_training タスク）で採点する運用が実際に成立するかを確認する。後者が本リポジトリの主目的であり、評価層の入力契約・採点・provenance 記録が意図どおり機能するかの検証結果を、実験結果と同等の重みで報告する。"
+ },
+ "experiment_history": {
+  "cycles": [
+   {
+    "run_stage": "full",
+    "experimental_design": {
+     "experiment_summary": "研究対象は学習済みモデルではなく集約関数である。zero-cost proxy スコアのテンソルのみを入力として、NAS-Bench-201 の 300 アーキテクチャ（CIFAR-10）の品質順位を、真の精度を一切見ずに出力する。その順位をベンチマークの公表精度表で採点する。パイプライン: (1) サンプリング — 固定シード 777 で 15,625 から 300 件を一様抽出。真の CIFAR-10 精度は公表テーブルから読み取り専用で表引きするのみで、候補アーキテクチャは一切学習しない。(2) proxy 計算（GPU を使う唯一の段階）— シード {0,1,2} ごとに全サンプル網を再初期化し、CIFAR-10 訓練画像から 128 枚のミニバッチを新たに引き、synflow / nwot(jacob_cov) / snip / grad_norm の 4 proxy を forward/backward 各 1 回で計算する。出力は 4 proxy x 3 シード x 300 アーキテクチャのスコアテンソル。(3) 集約（CPU のみ、閉形式）— スコアテンソルのみから proxy ごとの信頼性 s_p（3 シード対の平均 Kendall tau）と冗長性 r_p（他 3 proxy のランク平均との Spearman）を求め、w_p ∝ max(s_p,0)*max(1-r_p,0) を L1 正規化し、加重ランク和で順位づける。ベースラインは同一スコアテンソルから集約関数のみを差し替えて生成する。(4) 採点 — 実験コードは指標を計算しない。各 run が eval_inputs/nas_pre_training.json に生の入力（予測器ブランチと探索軌跡ブランチの両方）を書き出し、airas-eval 0.9.0 が採点する。健全性ゲート: 集約手法の比較に進む前に、単体 proxy の公表 Spearman 値と vote 約0.82 の再現を確認する。規模: GPU 負荷は 300 arch x 4 proxy x 3 シード = 3,600 回の単一ミニバッチ forward/backward のみで、最大約1.6M パラメータのランダム初期化 CNN が対象。1 アーキテクチャあたりの網の構築は 2 回に抑えている（nwot と grad_norm/snip でインスタンスを共有し、float64 で重みを破壊する synflow のみ別に建てる）。依存は全て aarch64 wheel が実在するものに限る（torch 2.13.0 を確認済み）。NASLib は PyPI に無いため使用しない。アーキテクチャ学習に要する数百 GPU 時間は表引きにより完全に回避される。",
+     "compute_environment": {
+      "arch": "aarch64",
+      "gpu_type": "NVIDIA GB200",
+      "gpu_count": 1,
+      "cpu_cores": 144,
+      "python_version": "3.11",
+      "description": "RIKYU Slurm クラスタ（Seyval 経由の BYO compute, byo:4f616e40-bb56-45aa-95b5-38fa4d2d0b8b, partition=gpu）。aarch64 のため依存は aarch64 wheel が実在するものに限る。アーキテクチャの学習は行わず、GPU は zero-cost proxy の 1 ミニバッチ forward/backward にのみ使用する。ネットワーク構築が CPU 律速で支配的なため、実行時間は GPU 性能よりアーキテクチャ数に比例する。"
+     },
+     "models_to_use": [
+      "NAS-Bench-201 探索空間の cell CNN 候補（6 辺の cell、演算集合 {none, skip_connect, avg_pool_3x3, nor_conv_1x1, nor_conv_3x3}、CIFAR-10 のチャネル幅 16->32->64、1 インスタンスあたり約0.07M-1.6M パラメータ）。一様抽出した 300 インスタンスをランダム初期化状態でのみ使用し、学習は一切行わない。"
+     ],
+     "datasets_to_use": [
+      "CIFAR-10"
+     ],
+     "evaluation_metrics": [
+      {
+       "name": "spearman_rho",
+       "description": "主指標。予測 = 各手法が出力する 300 アーキテクチャの完全順序（単体 proxy は生スコア順、集約は集約ランクスコア順）。真値 = NAS-Bench-201 公表 CIFAR-10 最終テスト精度。正しさの基準 = 予測順序が真値順序とどれだけ一致するか。予測の生成に精度ラベルは一切使わず、採点にのみ使う。算出は airas-eval 0.9.0 の nas_pre_training タスクに委譲し、実験コードは predicted_scores と reference_scores を書き出すのみ。範囲 [-1,1]、高いほど良い。シード {0,1,2} ごとに算出し平均±標準偏差で報告。先行研究の公表値（synflow 0.74 / nwot 0.73 / snip 0.58 / grad_norm 0.58 / vote 0.82）との直接照合が可能で、再現チェックの基準となる。可視化: 手法ごとの予測順位 vs 真値順位の散布図、平均 rho の棒グラフ（シード標準偏差をエラーバー）。"
+      },
+      {
+       "name": "kendall_tau",
+       "description": "補助指標。Kendall の tau-b（同点補正あり）。予測順序と真値順序の順位一致度を全ペアで測る。小バッチの ZC proxy（特に snip / grad_norm）が生じる同点に対して頑健であり、提案手法の信頼性項に用いる統計量と同じ族なので報告と手法ロジックが整合する。範囲 [-1,1]、高いほど良い。airas-eval が算出。可視化: 予測 vs 真値の順位散布図、手法別棒グラフ。"
+      },
+      {
+       "name": "spearman_rho_top_10pct",
+       "description": "補助指標（上位領域の識別能力）。真の CIFAR-10 精度で上位 10%（300 件中 30 件）に入る候補だけに限定して、予測スコアと真値の Spearman rho を計算する。全体 rho が高くても最良候補群の中での順序づけが無意味という事態を検出する。NAS の意思決定が実際に起きる領域であり、不安定な proxy を減点する提案手法の優位が最も現れるはずの指標。airas-eval が算出（fraction=0.1）。注意: 300 件では head が 30 件しかなく標本ノイズが大きい。sanity モードの少数サンプルではこの指標を判定に用いない。可視化: 上位 30 件に絞った散布図、手法別棒グラフ。"
+      },
+      {
+       "name": "precision_at_top_10pct",
+       "description": "補助指標（選択集合の質）。予測上位 10%（30 件）のうち、真値でも上位 10% に入るものの割合。範囲 [0,1]、高いほど良く、偶然水準は 0.10。『この手法が選ぶ上位 10% を実際に学習したら、何割が本当に優秀か』という運用上の問いに直接答える。airas-eval が算出（fraction=0.1）。可視化: 偶然水準 0.10 の基準線付き棒グラフ、補助として precision_at_top_k_curve。"
+      },
+      {
+       "name": "selection_regret_at_1",
+       "description": "補助指標（意思決定の帰結）。予測 1 位とした候補の真の精度と、候補プール内の真の最良精度との差。精度パーセントポイント単位で、低いほど良く、真の最適を選べば 0。順位相関が高く見えても第 1 位の選択が凡庸というケースを露出させる。NAS の最終目的（実際に学習する 1 つのアーキテクチャ）を絶対精度単位で測る。airas-eval が算出（k=1）。シードごとに算出し平均±標準偏差、オラクル 0 とランダム選択の期待リグレットを参照線として併記。可視化: 手法別のシード別リグレットの箱ひげ図に参照線。"
+      }
+     ],
+     "proposed_method": {
+      "method_name": "Reliability x Diversity Weighted Borda (RD-WBorda)",
+      "description": "ラベル不要・閉形式の zero-cost proxy 重み付き順位集約。入力は 4 proxy(synflow, nwot/jacob_cov, snip, grad_norm) x 3 シード x 300 アーキテクチャのスコアテンソルのみ。(i) 信頼性 s_p = proxy p の 3 シード対にわたる順位の平均 Kendall tau（初期化・ミニバッチ再抽出に対するランク安定性）。(ii) 冗長性 r_p = 他 3 proxy のランク平均と p のランクとの Spearman のシード平均（情報の重複度）。(iii) 重み w_p ∝ max(s_p,0)*max(1-r_p,0) を L1 正規化。全て 0 の場合は一様 1/4 にフォールバック。最終順位は sum_p w_p * rank_p の昇順。新規性: 等重み2値化 vote や固定重み結合と異なり、重みが proxy 自身の自己統計量だけから導かれるため、不安定な proxy と情報が重複する proxy が、真値ラベル・アーキテクチャ学習・追加 GPU パス・微分可能探索・ハイパーパラメータ調整のいずれもなしに自動的に減点される。全手法が同一スコアテンソルを消費し集約関数のみが異なるため、測定された効果は集約規則のみに帰属する。",
+      "training_config": {
+       "batch_size": 128,
+       "seed": 777,
+       "additional_params": "学習は行わない。batch_size は proxy 計算に用いる 1 ミニバッチのサイズ。seed 777 はアーキテクチャ抽出用の固定シードで、proxy 計算のシードは 0,1,2。"
+      },
+      "optuna_config": {
+       "enabled": false,
+       "n_trials": 0
+      }
+     },
+     "comparative_methods": [
+      {
+       "method_name": "Binarized Majority Vote (Abdelfattah et al., 2021)",
+       "description": "無改変の zero-cost アンサンブルベースライン。同一の 4 proxy x 3 シードのスコアテンソルから、各アーキテクチャ対 (i,j) について各 proxy がスコアの大きい方に 1 票を投じ（厳密な同点は投票しない）、総得票数で順位づける。等重みかつ二値のペア判定である点が、提案手法の連続的な自己統計量重み付けとの対比軸。NAS-Bench-201 CIFAR-10 で Spearman 約0.82 の再現が期待される。学習なし・ラベルなし・調整なし。",
+       "training_config": {
+        "batch_size": 128,
+        "seed": 777,
+        "additional_params": "学習なし。proxy シードは 0,1,2。"
+       },
+       "optuna_config": {
+        "enabled": false,
+        "n_trials": 0
+       }
+      },
+      {
+       "method_name": "Uniform Borda (equal-weight rank average)",
+       "description": "重み付けという変数のみを分離する閉形式アブレーション。同一のシード別 proxy ランクベクトルを固定の等重み 1/4 で平均する標準的な Borda count。RD-WBorda とランク入力を共有するため、両者の性能差はラベル不要の閉形式重み w_p = f(信頼性, 冗長性) のみに帰属する。二値化 vote と同等かやや上回ると予想。学習なし・ラベルなし・調整なし。",
+       "training_config": {
+        "batch_size": 128,
+        "seed": 777,
+        "additional_params": "学習なし。proxy シードは 0,1,2。"
+       },
+       "optuna_config": {
+        "enabled": false,
+        "n_trials": 0
+       }
+      },
+      {
+       "method_name": "Single zero-cost proxies (synflow / nwot / snip / grad_norm)",
+       "description": "集約なしの下限。各 proxy の生スコア順序をそのまま予測順位として、proxy ごと・シードごとに個別評価する。この系列は (a) 先行研究の NAS-Bench-201 CIFAR-10 公表相関（synflow 約0.74, nwot 約0.73, snip 約0.58, grad_norm 約0.58）を再現することでデータ生成過程の忠実性を保証する健全性ゲートであり、(b) 任意のアンサンブルが超えるべき下限でもある。RD-WBorda の重みを one-hot に退化させた場合に等しく、単体 proxy から等重みアンサンブル、自己統計量重み付けへと至るアブレーション軸を完成させる。学習なし・ラベルなし・調整なし。",
+       "training_config": {
+        "batch_size": 128,
+        "seed": 777,
+        "additional_params": "学習なし。proxy シードは 0,1,2。4 proxy それぞれを個別の run として評価する。"
+       },
+       "optuna_config": {
+        "enabled": false,
+        "n_trials": 0
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "additional_data": {
+  "evaluation_layer": {
+   "package": "airas-eval",
+   "version": "0.9.0",
+   "task_type": "nas_pre_training",
+   "task_signature": "nas_pre_training/v1@d992f9672656",
+   "verified_standalone": true,
+   "note": "合成データで validate と score を端から端まで確認済み。16 スカラー指標 + 4 曲線が算出され skipped は空。出力に provenance（inputs_sha256 / task_signature / airas-eval・numpy・scipy の解決済みバージョン）が刻まれることを確認した。"
+  },
+  "benchmark_table": {
+   "source": "https://raw.githubusercontent.com/automl/naslib/zerocost/naslib/data/nb201_all.pickle",
+   "sha256": "b93135dacdf16327733f0c165ee9f431f624e1f896b56b4abdc24df99e5be45e",
+   "n_archs": 15625,
+   "oracle_best_cifar10": 94.68,
+   "note": "公式 NAS-Bench-201 は約4.7GB の Google Drive 配布で安定した URL が無いため、NAS-Bench-Suite-Zero が再配布する 9.5MB のダンプを使う。同じ 15,625 アーキテクチャを含む。このテーブルの CIFAR-10 最大テスト精度は 94.68 で、よく引用される 94.37 とは一致しない（単一シード値か複数シード平均かの違いと思われる）。oracle_best は evaluated_scores と出典・単位が一致する 94.68 を採り、この差異は論文に明記する。"
+  },
+  "reproduction_targets": {
+   "source": "Abdelfattah et al. 2021 (arXiv:2101.08134) Table 1, NAS-Bench-201 CIFAR-10 の Spearman rho",
+   "values": {
+    "synflow": 0.74,
+    "jacob_cov_nwot": 0.73,
+    "grad_norm": 0.58,
+    "snip": 0.58,
+    "vote": 0.82
+   }
+  },
+  "scale_decision": {
+   "n_archs_full": 300,
+   "note": "NAS-Bench-Suite-Zero のプロトコルは 1,000 件だが、NAS-Bench-201 の網の構築が CPU 律速で支配的なため実行時間はアーキテクチャ数に比例する。1,000 件では 7 run 合計で 1.5〜4 時間と見積もられ小規模の範囲を超えるため 300 件に縮小した。真の上位 10% が 30 件となり、上位10%限定指標の標本ノイズが増えることを承知のうえでの判断。"
+  }
+ }
+}
