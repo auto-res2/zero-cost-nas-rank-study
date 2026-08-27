@@ -36,7 +36,29 @@ COPY pyproject.toml uv.lock ./
 # --locked: install exactly what uv.lock pins AND verify the lock is still in
 # sync with pyproject.toml (--frozen would use the lock without checking).
 # So the build fails on dependency drift instead of resolving around it.
-RUN uv sync --locked --no-cache --group eval
+# Everything that installs into the venv happens in ONE RUN.
+#
+# The builder is kaniko, which walks the whole filesystem to snapshot a layer
+# after every RUN and COPY. Once torch and the CUDA libraries are unpacked the
+# tree is several GB across tens of thousands of files, so each *additional*
+# instruction after this point costs a full-filesystem snapshot — measured at
+# ~15 minutes for one. Adding steps here is nearly free; adding them below is
+# not. Merge, do not append.
+#
+# The second half installs the reference implementation of the paper this study
+# reproduces — zero-cost proxies, the NAS-Bench-201 network builder, their
+# initialisation and their CIFAR dataloader:
+#
+#   Abdelfattah et al., "Zero-Cost Proxies for Lightweight NAS", ICLR 2021
+#   https://github.com/mohsaied/zero-cost-nas  (Apache-2.0), pinned to a commit
+#
+# --no-build-isolation is required: its setup.py does `import torch` at build
+# time and exits if torch is missing, so it must build against the venv created
+# by the `uv sync` above. setuptools and gitpython are what that setup.py needs.
+RUN uv sync --locked --no-cache --group eval \
+ && uv pip install --no-cache setuptools gitpython \
+ && uv pip install --no-cache --no-build-isolation \
+      "foresight @ git+https://github.com/mohsaied/zero-cost-nas@b5059bc42e2275534f584bc21a2d28ab8427cd8e"
 
 # From here on, every `uv run` (src.main, `make evaluate`, ...) uses the venv
 # built above as-is: no resolution, no network, no writes at run time.
@@ -52,42 +74,13 @@ ENV UV_NO_SYNC=1
 # interpreter, so the run does not depend on which form was derived.
 ENV PATH="/workspace/.venv/bin:$PATH"
 
-# Install the reference implementation of the paper this study reproduces:
-# zero-cost proxies, the NAS-Bench-201 network builder, their initialisation and
-# their CIFAR dataloader. Pinned to a commit, not a branch.
-#
-#   Abdelfattah et al., "Zero-Cost Proxies for Lightweight NAS", ICLR 2021
-#   https://github.com/mohsaied/zero-cost-nas  (Apache-2.0)
-#
-# --no-build-isolation is required: its setup.py does `import torch` at build
-# time and exits if torch is missing, so it must build against the venv above
-# rather than an isolated environment. setuptools and gitpython are what that
-# setup.py itself needs to run.
-RUN uv pip install --no-cache setuptools gitpython \
- && uv pip install --no-cache --no-build-isolation \
-      "foresight @ git+https://github.com/mohsaied/zero-cost-nas@b5059bc42e2275534f584bc21a2d28ab8427cd8e"
-
-# Bake the two downloads into the image.
-#
-# Seyval containers are disposable, and on the BYO Slurm cluster the parent of
-# the per-run working directory is mounted read-only, so a run-time download
-# cannot be cached anywhere: every run would re-fetch the same ~180 MB over the
-# compute node's link. Doing it here means it happens once per image instead.
-#
-# Only `src/preprocess.py` is copied first, so this layer is invalidated by a
-# change to the pinned URL / SHA-256 and not by every edit to the experiment
-# code. It is also the single source of truth for that pin — the Dockerfile
-# does not repeat it. Both CIFAR-10 splits are fetched because foresight's
-# get_cifar_dataloaders constructs a train AND a test dataset.
-COPY src/preprocess.py ./src/preprocess.py
-RUN python -c "from src import preprocess; preprocess.load_benchmark_table('.cache')" \
- && python -c "import torchvision as tv; tv.datasets.CIFAR10('.cache', train=True, download=True); tv.datasets.CIFAR10('.cache', train=False, download=True)"
-
 # Copy the rest of the application
 COPY . .
 
-# Create results directory
-RUN mkdir -p .research/results
+# NO further RUN/COPY after this point: each one costs kaniko a full-filesystem
+# snapshot over the multi-GB venv. `.research/results` is not created here —
+# src/inference.py makes it with mkdir(parents=True, exist_ok=True) when it
+# writes, which costs nothing at build time.
 
 # Default command (can be overridden in workflow)
 CMD ["bash"]
