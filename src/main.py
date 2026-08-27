@@ -42,6 +42,7 @@ def main(cfg: DictConfig) -> int:
         "mode": mode,
         "results_dir": str(cfg.results_dir),
         "cache_dir": str(cfg.cache_dir),
+        "shared_cache_dir": str(cfg.shared_cache_dir) if cfg.shared_cache_dir else "",
         "dataset": str(cfg.dataset),
         "num_classes": int(cfg.num_classes),
         "dataload_batches": int(cfg.dataload_batches),

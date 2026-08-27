@@ -7,6 +7,11 @@ defaults:
 results_dir: .research/results
 mode: sanity
 cache_dir: .cache
+# Read-only staging area on the execution cluster, bind-mounted into every
+# container. Populated once out-of-band because the compute nodes reach the
+# public internet at ~90 kB/s. Ignored when the path does not exist, so this
+# config also works off-cluster.
+shared_cache_dir: /data1/rkp00041/rku00122/.airas-cache
 
 # Benchmark (fixed by the experimental design). The network itself comes from
 # foresight.models.nasbench2, so no architecture hyper-parameters are set here:

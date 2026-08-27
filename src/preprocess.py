@@ -22,6 +22,14 @@ https://github.com/automl/naslib/tree/zerocost -> naslib/data/nb201_all.pickle
 (9.5 MB). The official release is a ~4.7 GB Google-Drive archive with no stable
 programmatic URL; this redistribution carries the same 15,625 architectures.
 Pinned by SHA-256 so a changed table fails the run instead of the results.
+
+SHARED CACHE: the compute nodes reach the public internet at ~90 kB/s, which is
+30 minutes for the 170 MB CIFAR-10 archive — longer than the job itself. The
+cluster bind-mounts `/data1/rkp00041` into every container (read-only for the
+group directory), so both inputs are staged there once and read from there
+afterwards. `shared_cache_dir` points at that staging area; when it is absent
+or incomplete the code falls back to downloading into `cache_dir`, so a run
+outside this cluster still works unchanged.
 """
 
 from __future__ import annotations
@@ -48,8 +56,33 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def load_benchmark_table(cache_dir: str) -> dict:
-    """Download (once) and return the NAS-Bench-201 table, SHA-256 verified."""
+def _shared_file(shared_cache_dir: str | None, name: str) -> Path | None:
+    """Return a readable file from the shared cache, or None."""
+    if not shared_cache_dir:
+        return None
+    candidate = Path(shared_cache_dir) / name
+    try:
+        return candidate if candidate.is_file() else None
+    except OSError:
+        return None
+
+
+def load_benchmark_table(cache_dir: str, shared_cache_dir: str | None = None) -> dict:
+    """Return the NAS-Bench-201 table, SHA-256 verified.
+
+    Reads the shared staging copy when it is present and intact; otherwise
+    downloads into `cache_dir`. The SHA-256 check is identical either way, so a
+    stale or truncated shared copy is rejected rather than silently used.
+    """
+    shared = _shared_file(shared_cache_dir, "nb201_all.pickle")
+    if shared is not None and _sha256(shared) == NB201_SHA256:
+        print(f"[preprocess] using shared benchmark table: {shared}", flush=True)
+        with shared.open("rb") as handle:
+            table = pickle.load(handle)
+        if len(table) != NB201_N_ARCHS:
+            raise RuntimeError(f"expected {NB201_N_ARCHS} architectures, got {len(table)}")
+        return table
+
     cache = Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
     path = cache / "nb201_all.pickle"
@@ -103,11 +136,26 @@ def training_costs(table: dict, archs: list[str], dataset: str) -> list[float]:
     ]
 
 
-def build_train_loader(batch_size: int, dataset: str, cache_dir: str):
-    """The reference implementation's CIFAR-10 training loader, unmodified."""
+def build_train_loader(batch_size: int, dataset: str, cache_dir: str,
+                      shared_cache_dir: str | None = None):
+    """The reference implementation's CIFAR-10 loader, unmodified.
+
+    Only the directory it reads from is chosen here. torchvision verifies the
+    extracted archive before doing anything, so pointing `datadir` at a
+    read-only staging copy makes it skip the download; if the copy is missing
+    it downloads into `cache_dir` exactly as before.
+    """
     from foresight.dataset import get_cifar_dataloaders
 
+    datadir = cache_dir
+    extracted = _shared_file(shared_cache_dir, "cifar-10-batches-py/batches.meta")
+    if extracted is not None:
+        datadir = str(Path(shared_cache_dir))
+        print(f"[preprocess] using shared CIFAR-10: {datadir}", flush=True)
+    else:
+        Path(cache_dir).mkdir(parents=True, exist_ok=True)
+
     train_loader, _ = get_cifar_dataloaders(
-        batch_size, batch_size, dataset, num_workers=0, datadir=cache_dir
+        batch_size, batch_size, dataset, num_workers=0, datadir=datadir
     )
     return train_loader

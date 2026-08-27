@@ -240,7 +240,8 @@ def run_experiment(cfg: dict) -> int:
     num_classes = int(cfg["num_classes"])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    table = preprocess.load_benchmark_table(cfg["cache_dir"])
+    shared_cache = cfg.get("shared_cache_dir") or None
+    table = preprocess.load_benchmark_table(cfg["cache_dir"], shared_cache)
     oracle_best = preprocess.oracle_best_accuracy(table, dataset)
     archs = preprocess.sample_architectures(table, cfg["n_archs"], cfg["sample_seed"])
     true_accuracy = preprocess.true_accuracies(table, archs, dataset)
@@ -248,7 +249,7 @@ def run_experiment(cfg: dict) -> int:
 
     # The reference implementation's loader; built once, re-drawn per architecture.
     train_loader = preprocess.build_train_loader(
-        cfg["batch_size"], dataset, cfg["cache_dir"]
+        cfg["batch_size"], dataset, cfg["cache_dir"], shared_cache
     )
 
     # W&B is best-effort: a logging outage must not lose a finished experiment.
