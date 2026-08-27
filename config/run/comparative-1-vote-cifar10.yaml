@@ -1,0 +1,4 @@
+# Abdelfattah et al. (2021) binarized majority vote, unmodified.
+run_id: comparative-1-vote-cifar10
+method: vote
+proxies: [synflow, nwot, snip, grad_norm]

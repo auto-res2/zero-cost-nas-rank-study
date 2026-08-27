@@ -1,18 +1,29 @@
-# Main configuration for Hydra
-# This file will be populated by AI code generator based on experimental design
-
 defaults:
   - _self_
-  - run: ???  # loads from config/run/, accessible as 'run=' in CLI
+  - run: proposed-rdwborda-cifar10
 
-# Execution mode: full, sanity, or pilot
-mode: full
-
-# Results output directory
+# Overridden on the command line by the runners:
+#   uv run python -u -m src.main run={run_id} results_dir=.research/results mode={mode}
 results_dir: .research/results
+mode: sanity
+cache_dir: .cache
 
-# WandB configuration (will be set by AI agent)
+# Search space and benchmark (fixed by the experimental design).
+dataset: cifar10
+channels: 16
+num_cells: 5
+# Architecture sampling seed, fixed at design time so every method sees the
+# identical candidate pool.
+sample_seed: 777
+# Which proxy seed produces the canonical eval_inputs file. Fixed here, never
+# chosen after looking at results.
+primary_seed_index: 0
+
 wandb:
-  entity: ???
-  project: ???
-  mode: online
+  entity: ${oc.env:WANDB_ENTITY,null}
+  project: zero-cost-nas-rank-study
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null

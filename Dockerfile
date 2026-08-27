@@ -44,6 +44,14 @@ RUN uv sync --locked --no-cache --group eval
 # GitHub workflows pass to `docker run` and the `uv run` calls in the Makefile.
 ENV UV_NO_SYNC=1
 
+# Also put the venv first on PATH. The execution platform derives its own entry
+# point by reading this repository, and it has produced a bare
+# `python -u -m src.main ...` (no `uv run`) for this code. Without this line
+# that form runs the image's system interpreter, which has none of the
+# dependencies. With it, `uv run python ...` and bare `python ...` are the same
+# interpreter, so the run does not depend on which form was derived.
+ENV PATH="/workspace/.venv/bin:$PATH"
+
 # Copy the rest of the application
 COPY . .
 

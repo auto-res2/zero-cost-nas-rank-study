@@ -9,6 +9,16 @@ requires-python = ">=3.11"
 dependencies = [
     "hydra-core",
     "wandb",
+    # Zero-cost proxies need one forward/backward pass per architecture; the
+    # NAS-Bench-201 cells are built and scored in PyTorch. aarch64 wheels
+    # (manylinux_2_28_aarch64) exist for 2.13.0, which the GB200 target needs.
+    "torch==2.13.0",
+    # CIFAR-10 loading for the single scoring minibatch.
+    "torchvision",
+    "numpy",
+    # Rank statistics used by the *method* (the reliability/redundancy weights).
+    # Reported metrics come from airas-eval, never from here.
+    "scipy",
 ]
 
 # `src/` is run with `uv run python -m src.main` from the repository root,

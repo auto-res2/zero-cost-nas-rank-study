@@ -1,0 +1,4 @@
+# Aggregation-free floor and reproduction gate for the published value.
+run_id: comparative-5-snip-cifar10
+method: single:snip
+proxies: [snip]

@@ -1,0 +1,4 @@
+# PROPOSED: label-free reliability x diversity weighted Borda.
+run_id: proposed-rdwborda-cifar10
+method: rd_wborda
+proxies: [synflow, nwot, snip, grad_norm]

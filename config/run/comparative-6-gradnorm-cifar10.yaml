@@ -1,0 +1,4 @@
+# Aggregation-free floor and reproduction gate for the published value.
+run_id: comparative-6-gradnorm-cifar10
+method: single:grad_norm
+proxies: [grad_norm]

@@ -1,0 +1,4 @@
+# Aggregation-free floor and reproduction gate for the published value.
+run_id: comparative-3-synflow-cifar10
+method: single:synflow
+proxies: [synflow]
