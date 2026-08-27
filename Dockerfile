@@ -27,6 +27,27 @@ COPY --from=ghcr.io/astral-sh/uv:0.12.6@sha256:88bc6eb1ccd4b82efd0e1b530caffabdd
 # Set working directory
 WORKDIR /workspace
 
+# Bake the NAS-Bench-201 ground-truth table (9.5 MB) into the image, HERE —
+# before the dependency install.
+#
+# Position is the whole point. kaniko snapshots the filesystem after every RUN
+# and COPY, and the cost scales with the tree: doing this after torch and the
+# CUDA libraries are unpacked (several GB) is expensive, doing it now — when
+# the image is still just the base plus apt — is not.
+#
+# Only `src/preprocess.py` is copied, so this layer is invalidated by a change
+# to the pinned URL / SHA-256 rather than by every edit to the experiment code,
+# and that file stays the single source of truth for the pin. It imports no
+# third-party package at module level, so it runs on the base interpreter with
+# nothing installed yet.
+#
+# CIFAR-10 is deliberately NOT baked: it is 170 MB from cs.toronto.edu, and the
+# build log shows that download stalling for 15+ minutes on the builder. It
+# comes from the cluster's shared cache instead (see src/preprocess.py).
+COPY src/preprocess.py ./src/preprocess.py
+RUN python -c "from src import preprocess; preprocess.load_benchmark_table('/opt/airas-cache')"
+ENV AIRAS_IMAGE_CACHE=/opt/airas-cache
+
 # Copy dependency files. uv.lock is REQUIRED: a missing lock file fails the
 # build here rather than silently re-resolving dependencies later.
 COPY pyproject.toml uv.lock ./

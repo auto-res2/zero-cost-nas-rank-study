@@ -35,6 +35,7 @@ outside this cluster still works unchanged.
 from __future__ import annotations
 
 import hashlib
+import os
 import pickle
 import random
 import urllib.request
@@ -74,14 +75,21 @@ def load_benchmark_table(cache_dir: str, shared_cache_dir: str | None = None) ->
     downloads into `cache_dir`. The SHA-256 check is identical either way, so a
     stale or truncated shared copy is rejected rather than silently used.
     """
-    shared = _shared_file(shared_cache_dir, "nb201_all.pickle")
-    if shared is not None and _sha256(shared) == NB201_SHA256:
-        print(f"[preprocess] using shared benchmark table: {shared}", flush=True)
-        with shared.open("rb") as handle:
-            table = pickle.load(handle)
-        if len(table) != NB201_N_ARCHS:
-            raise RuntimeError(f"expected {NB201_N_ARCHS} architectures, got {len(table)}")
-        return table
+    # Two read-only sources are tried before downloading: the copy baked into
+    # the image at build time (AIRAS_IMAGE_CACHE), then the cluster's shared
+    # staging area. Both are verified with the same SHA-256, so a stale copy is
+    # rejected rather than silently used.
+    for candidate_dir in (os.environ.get("AIRAS_IMAGE_CACHE"), shared_cache_dir):
+        found = _shared_file(candidate_dir, "nb201_all.pickle")
+        if found is not None and _sha256(found) == NB201_SHA256:
+            print(f"[preprocess] using cached benchmark table: {found}", flush=True)
+            with found.open("rb") as handle:
+                table = pickle.load(handle)
+            if len(table) != NB201_N_ARCHS:
+                raise RuntimeError(
+                    f"expected {NB201_N_ARCHS} architectures, got {len(table)}"
+                )
+            return table
 
     cache = Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
