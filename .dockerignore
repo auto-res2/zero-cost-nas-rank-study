@@ -25,6 +25,10 @@ ENV/
 # uv cache
 .uv-cache/
 
+# Dataset / benchmark cache: the image downloads its own into /workspace/.cache
+# before `COPY . .`, so a host copy must not overwrite it.
+.cache/
+
 # Results and logs
 .research/results/**
 *.log

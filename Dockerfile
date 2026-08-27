@@ -52,6 +52,21 @@ ENV UV_NO_SYNC=1
 # interpreter, so the run does not depend on which form was derived.
 ENV PATH="/workspace/.venv/bin:$PATH"
 
+# Bake the two downloads into the image.
+#
+# Seyval containers are disposable, and on the BYO Slurm cluster the parent of
+# the per-run working directory is mounted read-only, so a run-time download
+# cannot be cached anywhere: every run would re-fetch the same ~180 MB over the
+# compute node's link. Doing it here means it happens once per image instead.
+#
+# Only `src/preprocess.py` is copied first, so this layer is invalidated by a
+# change to the pinned URL / SHA-256 and not by every edit to the experiment
+# code. It is also the single source of truth for that pin — the Dockerfile
+# does not repeat it.
+COPY src/preprocess.py ./src/preprocess.py
+RUN python -c "from src import preprocess; preprocess.load_benchmark_table('.cache')" \
+ && python -c "import torchvision; torchvision.datasets.CIFAR10(root='.cache', train=True, download=True)"
+
 # Copy the rest of the application
 COPY . .
 
