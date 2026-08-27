@@ -52,6 +52,21 @@ ENV UV_NO_SYNC=1
 # interpreter, so the run does not depend on which form was derived.
 ENV PATH="/workspace/.venv/bin:$PATH"
 
+# Install the reference implementation of the paper this study reproduces:
+# zero-cost proxies, the NAS-Bench-201 network builder, their initialisation and
+# their CIFAR dataloader. Pinned to a commit, not a branch.
+#
+#   Abdelfattah et al., "Zero-Cost Proxies for Lightweight NAS", ICLR 2021
+#   https://github.com/mohsaied/zero-cost-nas  (Apache-2.0)
+#
+# --no-build-isolation is required: its setup.py does `import torch` at build
+# time and exits if torch is missing, so it must build against the venv above
+# rather than an isolated environment. setuptools and gitpython are what that
+# setup.py itself needs to run.
+RUN uv pip install --no-cache setuptools gitpython \
+ && uv pip install --no-cache --no-build-isolation \
+      "foresight @ git+https://github.com/mohsaied/zero-cost-nas@b5059bc42e2275534f584bc21a2d28ab8427cd8e"
+
 # Bake the two downloads into the image.
 #
 # Seyval containers are disposable, and on the BYO Slurm cluster the parent of
@@ -62,10 +77,11 @@ ENV PATH="/workspace/.venv/bin:$PATH"
 # Only `src/preprocess.py` is copied first, so this layer is invalidated by a
 # change to the pinned URL / SHA-256 and not by every edit to the experiment
 # code. It is also the single source of truth for that pin — the Dockerfile
-# does not repeat it.
+# does not repeat it. Both CIFAR-10 splits are fetched because foresight's
+# get_cifar_dataloaders constructs a train AND a test dataset.
 COPY src/preprocess.py ./src/preprocess.py
 RUN python -c "from src import preprocess; preprocess.load_benchmark_table('.cache')" \
- && python -c "import torchvision; torchvision.datasets.CIFAR10(root='.cache', train=True, download=True)"
+ && python -c "import torchvision as tv; tv.datasets.CIFAR10('.cache', train=True, download=True); tv.datasets.CIFAR10('.cache', train=False, download=True)"
 
 # Copy the rest of the application
 COPY . .

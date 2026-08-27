@@ -1,4 +1,0 @@
-# Aggregation-free floor and reproduction gate for the published value.
-run_id: comparative-4-nwot-cifar10
-method: single:nwot
-proxies: [nwot]

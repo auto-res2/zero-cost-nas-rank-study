@@ -1,23 +1,27 @@
-"""Benchmark table and scoring minibatch.
+"""Benchmark ground truth and the scoring dataloader.
 
 Two inputs are prepared here and nothing else:
 
-1. The NAS-Bench-201 ground-truth table. It is read ONLY to score rankings
-   afterwards and to fill the benchmark-published fields of the evaluation
-   inputs (true accuracy, training cost, search-space scores). No candidate
-   architecture is ever trained by this repository — that is the point of a
-   training-free study.
+1. The NAS-Bench-201 ground-truth table, read ONLY to score rankings and to
+   fill the benchmark-published fields of the evaluation inputs (true accuracy,
+   training cost, search-space scores). No architecture is ever trained.
 
-2. One CIFAR-10 minibatch, used for the single forward/backward pass that the
-   data-dependent zero-cost proxies need.
+2. The CIFAR-10 training dataloader that the data-dependent proxies consume.
+   This is the reference implementation's own loader, not a re-derivation:
 
-REUSE: the table is the redistributed NAS-Bench-201 result dump shipped with
-NAS-Bench-Suite-Zero (Krishnakumar et al., NeurIPS 2022 D&B),
+       foresight.dataset.get_cifar_dataloaders(...)
+       https://github.com/mohsaied/zero-cost-nas  (Apache-2.0)
+
+   It matters that this is theirs: the transforms it applies (RandomCrop with
+   padding 4, horizontal flip, and their specific normalisation constants) are
+   part of what produced the published Spearman values being reproduced.
+
+REUSE: the ground-truth table is the redistributed NAS-Bench-201 result dump
+shipped with NAS-Bench-Suite-Zero (Krishnakumar et al., NeurIPS 2022 D&B),
 https://github.com/automl/naslib/tree/zerocost -> naslib/data/nb201_all.pickle
-(9.5 MB). The official NAS-Bench-201 release is a ~4.7 GB Google-Drive archive
-with no stable programmatic URL, so this redistribution is used instead; it
-carries the same 15,625 architectures. The file is pinned by SHA-256 so a
-silently changed table fails the run instead of changing the results.
+(9.5 MB). The official release is a ~4.7 GB Google-Drive archive with no stable
+programmatic URL; this redistribution carries the same 15,625 architectures.
+Pinned by SHA-256 so a changed table fails the run instead of the results.
 """
 
 from __future__ import annotations
@@ -28,18 +32,12 @@ import random
 import urllib.request
 from pathlib import Path
 
-import torch
-
 NB201_URL = (
     "https://raw.githubusercontent.com/automl/naslib/zerocost/naslib/data/nb201_all.pickle"
 )
 # Pinned 2026-08-27. Verified before every use.
 NB201_SHA256 = "b93135dacdf16327733f0c165ee9f431f624e1f896b56b4abdc24df99e5be45e"
 NB201_N_ARCHS = 15625
-
-# CIFAR-10 channel statistics used by NAS-Bench-201's own training pipeline.
-CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
-CIFAR10_STD = (0.2470, 0.2435, 0.2616)
 
 
 def _sha256(path: Path) -> str:
@@ -105,21 +103,11 @@ def training_costs(table: dict, archs: list[str], dataset: str) -> list[float]:
     ]
 
 
-def load_minibatch(
-    batch_size: int, cache_dir: str, seed: int, device: torch.device
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """One random CIFAR-10 training minibatch for the data-dependent proxies."""
-    import torchvision
-    import torchvision.transforms as transforms
+def build_train_loader(batch_size: int, dataset: str, cache_dir: str):
+    """The reference implementation's CIFAR-10 training loader, unmodified."""
+    from foresight.dataset import get_cifar_dataloaders
 
-    transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize(CIFAR10_MEAN, CIFAR10_STD)]
+    train_loader, _ = get_cifar_dataloaders(
+        batch_size, batch_size, dataset, num_workers=0, datadir=cache_dir
     )
-    dataset = torchvision.datasets.CIFAR10(
-        root=cache_dir, train=True, download=True, transform=transform
-    )
-    generator = torch.Generator().manual_seed(seed)
-    indices = torch.randperm(len(dataset), generator=generator)[:batch_size].tolist()
-    images = torch.stack([dataset[i][0] for i in indices])
-    labels = torch.tensor([dataset[i][1] for i in indices], dtype=torch.long)
-    return images.to(device), labels.to(device)
+    return train_loader

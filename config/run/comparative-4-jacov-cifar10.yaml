@@ -1,0 +1,4 @@
+# Aggregation-free floor and reproduction gate for the published value.
+run_id: comparative-4-jacov-cifar10
+method: single:jacob_cov
+proxies: [jacob_cov]

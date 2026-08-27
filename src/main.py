@@ -19,11 +19,9 @@ from omegaconf import DictConfig, OmegaConf
 # proxies and the aggregation rule are identical everywhere (AGENTS.md).
 #
 # `full` samples 300 of the 15,625 architectures. That is smaller than the
-# 1,000 NAS-Bench-Suite-Zero uses, and the reason is cost: building a
-# NAS-Bench-201 network is CPU-bound and dominates the forward/backward pass,
-# so the run time scales with the architecture count and not with the GPU. At
-# 300 the true top 10% is 30 architectures, which is the floor at which the
-# top-10% metrics still mean anything.
+# 1,000 NAS-Bench-Suite-Zero uses, and the reason is cost: run time scales with
+# the architecture count, not with the GPU. At 300 the true top 10% is 30
+# architectures, the floor at which the top-10% metrics still mean anything.
 MODE_OVERRIDES = {
     # Cheap enough to run locally on CPU.
     "sanity": {"n_archs": 8, "seeds": [0], "batch_size": 16, "search_budget": 5},
@@ -45,8 +43,8 @@ def main(cfg: DictConfig) -> int:
         "results_dir": str(cfg.results_dir),
         "cache_dir": str(cfg.cache_dir),
         "dataset": str(cfg.dataset),
-        "channels": int(cfg.channels),
-        "num_cells": int(cfg.num_cells),
+        "num_classes": int(cfg.num_classes),
+        "dataload_batches": int(cfg.dataload_batches),
         "sample_seed": int(cfg.sample_seed),
         "primary_seed_index": int(cfg.primary_seed_index),
         "run_id": str(cfg.run.run_id),

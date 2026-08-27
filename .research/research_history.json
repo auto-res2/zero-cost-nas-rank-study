@@ -151,7 +151,7 @@
  "research_hypothesis": {
   "open_problems": "Abdelfattah et al. の vote は等重みの2値化多数決であり、AZ-NAS 等の集約も重みを固定している。proxy 計算時にゼロコストで得られる自己統計量——乱数シード/ミニバッチを変えた際の順位安定性（信頼性）と proxy 間の順位一致度（冗長性）——を使って、真の精度ラベルを一切使わずに proxy を重み付けする設計空間が未開拓のまま残っている。NAS-Bench-Suite-Zero は ZC proxy 間に相補情報が存在することを情報理論的に示し「非自明な組み合わせ」を将来課題としたが、閉形式の単純な集約でどこまで到達できるかは未回答である。",
   "method": "ラベル不要の信頼性 x 多様性 重み付き順位集約（RD-WBorda）。各 proxy を 3 つの乱数シード/ミニバッチで計算し、(i) シード間順位の平均 Kendall tau を信頼性 s_p、(ii) 他 proxy のランク平均との一致度を冗長性 r_p とし、w_p ∝ max(s_p,0)*max(1-r_p,0) を L1 正規化した重みでランク平均を加重化する。重みは proxy スコア行列のみから閉形式で決まり、真の精度・アーキテクチャ学習・追加 GPU パスを一切要しない。不安定な proxy と情報が重複する proxy が自動的に減点される点が、等重みの vote・一様 Borda・固定係数の AZ-NAS 型集約との本質的差異である。proxy スコアの計算自体は先行研究の実装から変更しないため、効果は集約関数のみに帰属できる。",
-  "experimental_setup": "対象: NAS-Bench-201 探索空間から固定シード 777 で一様サンプリングした 300 アーキテクチャ、データセットは CIFAR-10 のみ。真の精度は NAS-Bench-Suite-Zero が再配布する公表テーブル（SHA-256 でピン留め）を読み取り専用で表引きし、アーキテクチャの学習は一切行わない。proxy は synflow, nwot(jacob_cov), snip, grad_norm の 4 種を batch size 128・1 ミニバッチの forward/backward 1 回で計算し、初期化 x ミニバッチの乱数シード 3 条件（0,1,2）で反復する。GPU はこの proxy 計算にのみ使用する。比較対象: (i) 単体 proxy 4 種、(ii) Abdelfattah et al. の2値化多数決 vote（無改変ベースライン）、(iii) 一様 Borda、(iv) 提案の RD-WBorda。全集約は同一シードの同一 proxy スコア行列から集約関数のみを差し替えて算出する。ランダム探索ベースラインは airas-eval の gain_over_random_search が厳密な期待値として内蔵しているため自前実装しない。評価指標は airas-eval 0.9.0 の nas_pre_training タスクに全面的に委譲し、実験コードは指標を一切計算しない。予測器ブランチ（predicted_scores + reference_scores）と探索軌跡ブランチ（evaluated_scores + evaluation_costs + search_space_scores + oracle_best）の両方を eval_inputs に書き出し、20 指標すべてを発火させる。oracle_best は全 15,625 件の公表最大値 94.68 を設計時に固定する（よく引用される 94.37 とは一致しないが、evaluated_scores と出典・単位が一致する値を採る）。統計処理はシード 3 回の平均±標準偏差。",
+  "experimental_setup": "対象: NAS-Bench-201 探索空間から固定シード 777 で一様サンプリングした 300 アーキテクチャ、データセットは CIFAR-10 のみ。真の精度は NAS-Bench-Suite-Zero が再配布する公表テーブル（SHA-256 でピン留め）を読み取り専用で表引きし、アーキテクチャの学習は一切行わない。proxy は synflow, jacob_cov, snip, grad_norm の 4 種を、著者らの参照実装 foresight（https://github.com/mohsaied/zero-cost-nas, Apache-2.0, commit b5059bc4 に固定）をそのまま用いて batch size 128・1 ミニバッチの forward/backward 1 回で計算し、初期化 x ミニバッチの乱数シード 3 条件（0,1,2）で反復する。GPU はこの proxy 計算にのみ使用する。比較対象: (i) 単体 proxy 4 種、(ii) Abdelfattah et al. の2値化多数決 vote（無改変ベースライン）、(iii) 一様 Borda、(iv) 提案の RD-WBorda。全集約は同一シードの同一 proxy スコア行列から集約関数のみを差し替えて算出する。ランダム探索ベースラインは airas-eval の gain_over_random_search が厳密な期待値として内蔵しているため自前実装しない。評価指標は airas-eval 0.9.0 の nas_pre_training タスクに全面的に委譲し、実験コードは指標を一切計算しない。予測器ブランチ（predicted_scores + reference_scores）と探索軌跡ブランチ（evaluated_scores + evaluation_costs + search_space_scores + oracle_best）の両方を eval_inputs に書き出し、20 指標すべてを発火させる。oracle_best は全 15,625 件の公表最大値 94.68 を設計時に固定する（よく引用される 94.37 とは一致しないが、evaluated_scores と出典・単位が一致する値を採る）。統計処理はシード 3 回の平均±標準偏差。 proxy の計算・NAS-Bench-201 ネットワークの構築・重み初期化・CIFAR-10 ローダは全て foresight の実装を無改変で使用し、本リポジトリでは再実装しない。これは公表 Spearman 値との照合を意味あるものにするための措置で、測定値の差が集約関数のみに帰属することを保証する。自前実装は提案手法（RD-WBorda）と、論文に記述はあるが実装が公開されていない二値化多数決 vote、および一様 Borda に限る。",
   "primary_metric": "spearman_rho",
   "supporting_metrics": [
    "kendall_tau",
@@ -291,6 +291,31 @@
   "scale_decision": {
    "n_archs_full": 300,
    "note": "NAS-Bench-Suite-Zero のプロトコルは 1,000 件だが、NAS-Bench-201 の網の構築が CPU 律速で支配的なため実行時間はアーキテクチャ数に比例する。1,000 件では 7 run 合計で 1.5〜4 時間と見積もられ小規模の範囲を超えるため 300 件に縮小した。真の上位 10% が 30 件となり、上位10%限定指標の標本ノイズが増えることを承知のうえでの判断。"
+  },
+  "reference_implementation": {
+   "package": "foresight",
+   "source": "https://github.com/mohsaied/zero-cost-nas",
+   "commit": "b5059bc42e2275534f584bc21a2d28ab8427cd8e",
+   "license": "Apache-2.0",
+   "reused": [
+    "foresight.models.nasbench2.get_model_from_arch_str",
+    "foresight.weight_initializers.init_net",
+    "foresight.pruners.predictive.find_measures",
+    "foresight.dataset.get_cifar_dataloaders"
+   ],
+   "own_implementation_only": [
+    "rd_weights / rd_wborda (proposed)",
+    "binarized_vote (described in the paper, not released)",
+    "uniform_borda (standard Borda count)"
+   ],
+   "rejected_alternatives": {
+    "NASLib (NAS-Bench-Suite-Zero)": "requirements.txt pins torch==1.9.0 / torchvision==0.10.0; no aarch64+Blackwell wheel",
+    "xautodl (official NAS-Bench-201)": "pins numpy<=1.19.5, incompatible with torch 2.13",
+    "NATS-Bench": "benchmark files only on Google Drive / Baidu-Pan; model code lives in xautodl (same numpy pin). TSS is the identical 15,625 architectures as NAS-Bench-201"
+   }
+  },
+  "benchmark_currency": {
+   "note": "NAS-Bench-201 は 2020 年の発表だが 2026 年時点でも zero-cost proxy 研究の標準ベンチマークとして現役。確認した 2026 年の実例: InTrain (2026-06), Budgeted Fixed-Proxy Search for Zero-Shot NAS (Electronics 2026-08, NB201 TSS × 8 proxy × 3 dataset), Bi-EZP (2026-08, ensemble zero-cost proxy 探索), Meta-Learning Predictors for NAS (2026-05), G-ICSO-NAS (2026-04), NAS-Driven Hardware Accelerator Exploration (2026-08, 全 15,625 で Pareto 解析)。"
   }
  }
 }

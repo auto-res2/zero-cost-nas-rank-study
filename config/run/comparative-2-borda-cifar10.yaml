@@ -1,4 +1,4 @@
 # Equal-weight rank average; isolates the weighting variable.
 run_id: comparative-2-borda-cifar10
 method: borda
-proxies: [synflow, nwot, snip, grad_norm]
+proxies: [synflow, jacob_cov, snip, grad_norm]

@@ -8,10 +8,14 @@ results_dir: .research/results
 mode: sanity
 cache_dir: .cache
 
-# Search space and benchmark (fixed by the experimental design).
+# Benchmark (fixed by the experimental design). The network itself comes from
+# foresight.models.nasbench2, so no architecture hyper-parameters are set here:
+# its defaults ARE the NAS-Bench-201 specification.
 dataset: cifar10
-channels: 16
-num_cells: 5
+num_classes: 10
+# Minibatches handed to foresight's find_measures ('random' dataload). 1 is the
+# reference driver's default and what the published values were computed with.
+dataload_batches: 1
 # Architecture sampling seed, fixed at design time so every method sees the
 # identical candidate pool.
 sample_seed: 777
