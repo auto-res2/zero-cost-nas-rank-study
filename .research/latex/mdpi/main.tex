@@ -1,0 +1,153 @@
+\documentclass[11pt]{article}
+\usepackage{luatexja-fontspec}
+\setmainjfont{IPAexMincho}
+\setsansjfont{IPAexGothic}
+\usepackage[margin=25mm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\title{ゼロコストプロキシの信頼性$\times$多様性重み付き順位集約:\\
+NAS-Bench-201 における小規模検証と外部評価層の実証}
+\author{AIRAS 自動研究システム（ホストモード）\\ \small 実験実行: RIKYU (NVIDIA GB200, aarch64) / 評価: airas-eval 0.9.0}
+\date{2026年8月28日}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+訓練不要のニューラルアーキテクチャ探索（NAS）では、初期化状態のネットワークを 1 回の順伝播・逆伝播のみで採点するゼロコストプロキシが用いられるが、単一のプロキシは探索空間や条件により性能が大きく変動する。本研究は、真の精度ラベルを一切用いずに、プロキシ自身の自己統計量——乱数シード間の順位安定性（信頼性）と他プロキシとの順位重複度（冗長性）——から重みを閉形式で導出する順位集約 RD-WBorda を提案し、NAS-Bench-201 から一様抽出した 300 アーキテクチャ（CIFAR-10）で検証した。評価指標はすべて外部の固定された評価層 airas-eval の \texttt{nas\_pre\_training} タスクに委譲し、実験コードは指標を一切計算しない。結果、単体プロキシの公表 Spearman 順位相関（synflow 0.74、jacob\_cov 0.73、snip 0.58、grad\_norm 0.58）はすべて許容誤差内で再現され、提案手法は $\rho = 0.846 \pm 0.004$（3 シード）で最良ベースライン（多数決 $0.776$）を $+0.070$ 上回った。一方で、真の上位 10\%に限定した順位相関では全ての集約手法が負値となり synflow 単独（$+0.58$）に大きく劣るという、当初の仮説に反する結果も得られた。本論文はこの負の結果、二値化多数決と等重み Borda が同点非存在下で数学的に一致する事実、および jacob\_cov の発散値を評価層が fail-closed に拒否した事例を含め、すべての観察を隠さず報告する。
+\end{abstract}
+
+\section{はじめに}
+ニューラルアーキテクチャ探索（NAS）の評価コストを削減するゼロコストプロキシ~\cite{abdelfattah-2021-zero,mellor-2020-neural}は、候補ネットワークを訓練せず、初期化直後の 1 ミニバッチの順伝播・逆伝播から得られる統計量でアーキテクチャを順位付けする。しかし単一プロキシの順位一貫性は探索空間・タスクにより大きく変動することが知られており~\cite{krishnakumar-2022-nas}、複数プロキシの組み合わせが研究されてきた。既存の組み合わせは、等重みの二値化多数決~\cite{abdelfattah-2021-zero}や固定重みの非線形集約~\cite{lee-2024-nas}のように、重みの決定に真の精度ラベルまたは設計時の固定値を必要とする。
+
+本研究の問いは次である：\textbf{プロキシ計算の副産物としてゼロコストで得られる自己統計量のみから、ラベルなしで集約重みを導出できるか。}この問いに答えるため、(i) シード間順位安定性を信頼性、(ii) 他プロキシとの順位一致度を冗長性として重みを閉形式で定める RD-WBorda を提案し、小規模（300 アーキテクチャ）ながら再現ゲート付きの実験で検証する。
+
+本研究にはもう一つの目的がある。実験コードが評価指標を自前実装すると、指標の選択・変種・バグを通じて結果が歪みうる。本実験では指標算出を外部の固定された評価層 airas-eval（バージョン 0.9.0 に固定、タスク署名 \texttt{nas\_pre\_training/v1@d992f9672656}）に完全委譲し、実験コードは生の予測値と探索軌跡のみを書き出す。この運用が実際に成立するか——入力契約・採点・来歴（provenance）記録が意図どおり機能するか——の検証結果を、実験結果と同等の重みで報告する。
+
+\section{関連研究}
+\textbf{ゼロコストプロキシ。}Abdelfattah ら~\cite{abdelfattah-2021-zero}は枝刈り由来の saliency 指標（snip~\cite{lee-2019-snip}、synflow~\cite{tanaka-2020-synflow} 等）をネットワーク全体のスコアへ拡張し、NAS-Bench-201~\cite{dong-2020-nas} 上で最終テスト精度との Spearman 順位相関を報告した（CIFAR-10 で synflow 0.74、jacob\_cov 0.73、snip 0.58、grad\_norm 0.58）。Mellor ら~\cite{mellor-2020-neural}は ReLU 活性パターンに基づく採点で訓練なし探索を示した。
+
+\textbf{プロキシの組み合わせ。}Abdelfattah らの多数決（vote）は 3 プロキシの等重み二値判定で $\rho \approx 0.82$ を報告した。NAS-Bench-Suite-Zero~\cite{krishnakumar-2022-nas}は 13 プロキシ$\times$28 タスクの統一評価により、プロキシ間に相補的情報が存在することを情報理論的に示し、「非自明な組み合わせ」を将来課題とした。AZ-NAS~\cite{lee-2024-nas}は相補的な 4 つの新規プロキシを非線形ランク集約で統合するが、集約規則自体は固定である。本研究はこれらと異なり、\textbf{重みをプロキシの自己統計量だけからデータ適応的に導出}する。
+
+\section{提案手法：RD-WBorda}
+入力は $P$ 個のプロキシ $\times$ $S$ 個の乱数シード $\times$ $N$ 個のアーキテクチャのスコアテンソルのみである（本実験では $P{=}4, S{=}3, N{=}300$）。各プロキシ $p$、シード $s$ のスコアから降順順位ベクトル $r_{p,s}$ を作り、以下を計算する。
+
+\begin{align}
+\text{信頼性}\quad s_p &= \operatorname*{mean}_{i<j} \ \tau\!\left(r_{p,i},\, r_{p,j}\right)\\
+\text{冗長性}\quad r_p &= \operatorname*{mean}_{s} \ \rho\!\left(r_{p,s},\ \tfrac{1}{P-1}\textstyle\sum_{q\neq p} r_{q,s}\right)\\
+\text{重み}\quad w_p &\propto \max(s_p, 0)\cdot \max(1-r_p, 0), \qquad \textstyle\sum_p w_p = 1
+\end{align}
+
+ここで $\tau$ は Kendall の順位相関、$\rho$ は Spearman の順位相関である。最終順位は加重ランク和 $\sum_p w_p\, r_{p,s}$ の昇順で定める。全重みが 0 に退化した場合は一様重みにフォールバックする（シードが 1 本しかない sanity 実行ではシード対が存在しないため常にこの経路になる）。重みの導出に真の精度・追加の GPU 計算・調整すべきハイパーパラメータは一切不要である。図~\ref{fig:method}に全体構成を示す。
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{images/diagram/method_overview.pdf}
+\caption{手法の全体構成。プロキシ計算は参照実装（foresight）を無改変で用い、集約（提案部分）はスコアテンソルのみを消費する。生の評価入力は外部評価層 airas-eval が採点する。}
+\label{fig:method}
+\end{figure}
+
+\section{実験設定}
+\textbf{探索空間と真値。}NAS-Bench-201~\cite{dong-2020-nas}の 15,625 アーキテクチャから固定シード 777 で 300 件を一様抽出した。真のテスト精度（200 エポック学習後）は NAS-Bench-Suite-Zero~\cite{krishnakumar-2022-nas}が再配布する公表テーブル（9.5 MB、SHA-256 でピン留め）を読み取り専用で参照し、\textbf{本研究ではアーキテクチャを一切学習しない}。リグレット計算の基準値 \texttt{oracle\_best} は同テーブル全 15,625 件の最大値 94.68 を実験設計時に固定した。なおこの値は文献でよく引用される 94.37 と一致しない（テーブルの版・シード集約の差と考えられる）。評価スコアと同一出典・同一単位の値を採ることを優先した。
+
+\textbf{プロキシ計算。}synflow、jacob\_cov、snip、grad\_norm の 4 プロキシを、再現対象論文~\cite{abdelfattah-2021-zero}の著者公開実装 foresight（Apache-2.0、コミット \texttt{b5059bc4} に固定）を\textbf{無改変で}用いて計算した。ネットワーク構築・重み初期化・CIFAR-10 ローダも同実装のものである。ミニバッチ 128、シード $\{0,1,2\}$（初期化とミニバッチ抽出の両方を制御）。プロキシの再導出を避けたのは、公表値との照合を意味あるものにするためであり、測定差は集約関数のみに帰属する。自前実装は提案手法、論文に記述のみ存在する二値化多数決（vote）、標準 Borda の 3 つに限る。
+
+\textbf{比較手法。}(i) 単体プロキシ 4 種（集約なしの下限、公表値の再現ゲートを兼ねる）、(ii) 二値化多数決 vote~\cite{abdelfattah-2021-zero}、(iii) 等重み Borda（重み付けの寄与を分離するアブレーション）、(iv) 提案 RD-WBorda。全手法は同一のスコアテンソルを消費し、集約関数のみが異なる。
+
+\textbf{評価。}実験コードは指標を計算せず、予測器ブランチ（\texttt{predicted\_scores} と真値 \texttt{reference\_scores}）および探索軌跡ブランチ（予測上位 30 件の真値・学習コスト・全 300 件の真値・\texttt{oracle\_best}）を \texttt{eval\_inputs} として書き出す。採点は airas-eval 0.9.0 が行い、16 のスカラー指標と 4 の曲線をすべて返す。主指標は Spearman $\rho$、補助指標は Kendall $\tau$・真の上位 10\%限定 $\rho$・上位 10\%precision・選択リグレット@1 であり、\textbf{5 指標は結果を見る前に実験設計で固定した}。各手法はシード 3 本で個別に採点し平均$\pm$標準偏差を報告する。
+
+\textbf{実行環境。}RIKYU クラスタ（NVIDIA GB200、aarch64、Slurm）上で Seyval 実行基盤を介して実行した。1 アーキテクチャあたり 1.12 秒（4 プロキシ、3 シード計）、4 プロキシ実行 1 本の実所要は約 17 分、GPU は 1 ミニバッチの順伝播・逆伝播にのみ使用した。
+
+\section{結果}
+
+\subsection{再現ゲート：公表値との照合}
+表~\ref{tab:repro}に単体プロキシと vote の再現結果を示す。4 つの単体プロキシはいずれも公表値との差が 0.02 以内であり、データ生成過程の忠実性が確認された。vote は 0.776 で公表値 0.82 との差が 0.044 とやや大きいが、原著の vote は 3 プロキシ（synflow、jacob\_cov、snip）構成、本実験は grad\_norm を加えた 4 プロキシ構成であり、厳密には同一手法ではない。また原著は全 15,625 件、本実験は 300 件サンプルである。
+
+\begin{table}[t]
+\centering
+\caption{再現ゲート：NAS-Bench-201 / CIFAR-10 の Spearman $\rho$（300 件・3 シード平均$\pm$標準偏差）と公表値~\cite{abdelfattah-2021-zero}の比較。}
+\label{tab:repro}
+\begin{tabular}{lccc}
+\toprule
+手法 & 本実験 & 公表値 & 差 \\
+\midrule
+synflow    & $0.759 \pm 0.001$ & 0.74 & $+0.019$ \\
+jacob\_cov & $0.722 \pm 0.019$ & 0.73 & $-0.008$ \\
+snip       & $0.565 \pm 0.005$ & 0.58 & $-0.015$ \\
+grad\_norm & $0.569 \pm 0.004$ & 0.58 & $-0.011$ \\
+vote（注） & $0.776 \pm 0.004$ & 0.82 & $-0.044$ \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+{\small 注: 原著 vote は 3 プロキシ構成・全数評価、本実験は 4 プロキシ構成・300 件サンプル。}
+\end{table}
+
+\subsection{主結果：集約手法の比較}
+表~\ref{tab:main}と図~\ref{fig:rho}に全手法の比較を示す。提案 RD-WBorda は $\rho = 0.846 \pm 0.004$ で全手法中最良であり、最良ベースライン（vote / Borda の $0.776$）に対し $+0.070$（シード標準偏差の約 17 倍）の差をつけた。学習された重みは synflow 0.308、jacob\_cov 0.402、snip 0.147、grad\_norm 0.143 であり、順位一貫性の低い snip / grad\_norm が自動的に減点され、他プロキシとの重複が最も小さい jacob\_cov に最大の重みが割り当てられた。ラベルを一切使わない自己統計量による重み付けが、この設定では有効に機能したといえる。選択リグレット@1 でも提案手法は $0.93 \pm 0.45$ 精度ポイントと最小であった（vote / Borda は $1.96 \pm 1.12$）。図~\ref{fig:scatter}に提案手法の予測順位と真の順位の散布図を示す。
+
+\begin{table}[t]
+\centering
+\caption{全手法の比較（300 件・3 シード平均$\pm$標準偏差）。$\rho$: 全体 Spearman、$\tau$: Kendall、$\rho_{10\%}$: 真の上位 10\%（30 件）内限定 Spearman、P@10\%: 上位 10\%precision、R@1: 選択リグレット@1（精度ポイント、小さいほど良い）。}
+\label{tab:main}
+\begin{tabular}{lccccc}
+\toprule
+手法 & $\rho$ & $\tau$ & $\rho_{10\%}$ & P@10\% & R@1 \\
+\midrule
+\textbf{RD-WBorda（提案）} & $\mathbf{0.846 \pm 0.004}$ & $\mathbf{0.663}$ & $-0.162$ & $0.378$ & $\mathbf{0.93}$ \\
+vote~\cite{abdelfattah-2021-zero} & $0.776 \pm 0.004$ & $0.587$ & $-0.170$ & $0.389$ & $1.96$ \\
+Borda（等重み） & $0.776 \pm 0.004$ & $0.587$ & $-0.170$ & $0.389$ & $1.96$ \\
+synflow & $0.759 \pm 0.001$ & $0.568$ & $\mathbf{+0.583}$ & $\mathbf{0.500}$ & $1.54$ \\
+jacob\_cov & $0.722 \pm 0.019$ & $0.553$ & $-0.121$ & $0.256$ & $1.39$ \\
+snip & $0.565 \pm 0.005$ & $0.405$ & $-0.276$ & $0.389$ & $2.03$ \\
+grad\_norm & $0.569 \pm 0.004$ & $0.407$ & $-0.272$ & $0.378$ & $2.03$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{images/chart/spearman_by_method.pdf}
+\caption{全体 Spearman $\rho$ の手法別比較（棒: 3 シード平均、誤差棒: 標準偏差）。}
+\label{fig:rho}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.6\linewidth]{images/chart/rank_scatter_proposed.pdf}
+\caption{提案手法の予測順位（シード 0）と真の精度順位の散布図（300 件）。破線は完全一致。}
+\label{fig:scatter}
+\end{figure}
+
+\subsection{仮説に反した結果：上位 10\%領域では集約が機能しない}
+当初の仮説では、不安定なプロキシの減点により提案手法の優位は上位領域でこそ明確になると予測した。\textbf{この仮説は棄却された。}図~\ref{fig:top10}に示すとおり、真の上位 10\%（30 件）に限定した Spearman $\rho$ は、すべての集約手法（提案含む）が負値（$-0.16$〜$-0.17$）であるのに対し、synflow 単独は $+0.583$ と高い正値を示した。上位 10\%precision でも synflow の 0.500 が最良である。すなわち\textbf{全体の順位付けでは集約が勝ち、最良候補群の内部では synflow 単独が勝つ}という明確な役割分担が観察された。弱いプロキシ（snip / grad\_norm はエリート領域で負相関）を、たとえ低重みでも混入させることが、エリート領域の順序を破壊すると解釈できる。
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{images/chart/top10pct_rho_by_method.pdf}
+\caption{真の上位 10\%（30 件）内に限定した Spearman $\rho$。集約手法はすべて負値であり、synflow 単独が唯一高い正値を示す。}
+\label{fig:top10}
+\end{figure}
+
+\subsection{その他の正直な観察}
+\textbf{vote と Borda の完全一致。}両者はすべての指標で小数点以下 4 桁まで一致した。これは偶然ではない：同点が存在しない場合、二値化多数決の得票数（自分より下位の候補数の総和）は Borda スコアと単調変換の関係にあり、順位として数学的に同一である。300 件の連続スコアでは同点がほぼ生じないため、両者は区別不能であった。すなわち本設定での「vote vs Borda」の比較には意味がなく、意味を持つのは重み付けの有無（Borda vs RD-WBorda）のみである。
+
+\textbf{jacob\_cov の発散と評価層の fail-closed 動作。}jacob\_cov は 300 件中 5 件で $-\infty$（活性カーネルの特異性による対数行列式の発散。参照実装が「最悪」を表す値として返すもの）を出力した。airas-eval はこの入力を「スコアは有限値のみ」という契約違反として\textbf{採点前に拒否した}。順位情報を保存する変換（有限最小値より 1 小さい値への写像、5 件の同順位は維持）を適用して採点した。この変換は順位ベースの全指標に対して不変である。
+
+\section{評価層（airas-eval）の検証結果}
+本研究の主目的の一つである評価層の運用検証について報告する。(1) \textbf{入力契約}：JSON Schema による検証は 28 ファイル（7 実行 $\times$ 4 ファイル）中 24 件を受理し、jacob\_cov の非有限値を含む 4 件を明示的な理由付きで拒否した。欠落した任意入力が黙って無視される事例はなかった。(2) \textbf{採点}：受理された全入力に対し 16 スカラー指標＋4 曲線が例外なく算出され、\texttt{skipped} は全件空であった。(3) \textbf{来歴}：全出力に入力の SHA-256、タスク署名（\texttt{nas\_pre\_training/v1@d992f9672656}）、解決済み依存バージョン（airas-eval 0.9.0 / numpy 2.4.6 / scipy 1.17.1）が刻印され、第三者が同一入力・同一評価器で数値を再検証できる。(4) \textbf{独立検証}：主指標 Spearman $\rho$ を scipy で独立に再計算し、評価層の出力と小数点以下 10 桁で一致することを事前の合成データ実験で確認済みである。総じて、指標算出を実験コードから分離する運用は実際に成立し、fail-closed の契約が実データの品質問題（発散値）を実際に捕捉した。
+
+\section{限界}
+(1) 300 件サンプルのため真の上位 10\%は 30 件しかなく、$\rho_{10\%}$ 等の上位限定指標は標本ノイズが大きい。上位領域に関する結論は暫定的である。(2) CIFAR-10・NAS-Bench-201 の単一設定であり、タスク間・探索空間間の一般化は未検証である。プロキシの性能が空間依存で崩れることは既知であり~\cite{krishnakumar-2022-nas}、提案手法の重みがその崩れに追従できるかは本実験からは言えない。(3) vote の再現は原著と構成（3 vs 4 プロキシ）が異なる。(4) \texttt{oracle\_best} に用いたテーブル最大値 94.68 は文献の 94.37 と異なる版に基づく。(5) アーキテクチャの学習を伴わないため、airas-eval の学習後評価タスク（\texttt{nas\_post\_training}、分類系 18 指標）は未検証である。(6) NAS-Bench-201 は 2020 年のベンチマークだが、2026 年現在もゼロコストプロキシ研究の標準として使われていることを確認している（例：NB201 TSS $\times$ 8 プロキシで評価する 2026 年の研究等）。
+
+\section{結論}
+真の精度ラベルを使わず、プロキシ計算の副産物である自己統計量のみから集約重みを導出する RD-WBorda を提案し、NAS-Bench-201 の 300 件サンプルで全体 Spearman $\rho = 0.846 \pm 0.004$、最良ベースライン比 $+0.070$ を達成した。学習された重みは順位一貫性の低いプロキシを自動減点しており、機構は設計どおり機能した。一方、真の上位 10\%領域では全集約手法が synflow 単独に大きく劣るという仮説棄却も観察され、「全体は集約、エリート領域は最良単体」という使い分けが示唆される。実務的には、候補の絞り込み（短リスト化）には集約を、短リスト内の最終順位付けには synflow を用いる二段構えが本結果からの素直な帰結である。また、評価指標を外部の固定層に委譲する運用は入力契約・採点・来歴記録のすべてで意図どおり機能し、発散値の混入という実データの品質問題を契約が捕捉した。本研究の全コード・生の評価入力・採点結果は公開リポジトリに保存されている。
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
