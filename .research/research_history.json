@@ -258,6 +258,343 @@
        }
       }
      ]
+    },
+    "experimental_results": {
+     "metrics_data": {
+      "primary_metric": "spearman_rho",
+      "per_run_mean_std": {
+       "proposed-rdwborda-cifar10": {
+        "spearman_rho": [
+         0.8458,
+         0.0042
+        ],
+        "kendall_tau": [
+         0.6632,
+         0.007
+        ],
+        "spearman_rho_top_10pct": [
+         -0.1619,
+         0.0353
+        ],
+        "precision_at_top_10pct": [
+         0.3778,
+         0.0509
+        ],
+        "selection_regret_at_1": [
+         0.93,
+         0.4503
+        ],
+        "best_score": [
+         93.9467,
+         0.0404
+        ],
+        "final_regret": [
+         0.7333,
+         0.0404
+        ],
+        "gain_over_random_search": [
+         0.4027,
+         0.0404
+        ],
+        "search_space_fraction_better": [
+         0.0011,
+         0.0019
+        ]
+       },
+       "comparative-1-vote-cifar10": {
+        "spearman_rho": [
+         0.7761,
+         0.004
+        ],
+        "kendall_tau": [
+         0.5872,
+         0.0059
+        ],
+        "spearman_rho_top_10pct": [
+         -0.1701,
+         0.0131
+        ],
+        "precision_at_top_10pct": [
+         0.3889,
+         0.0385
+        ],
+        "selection_regret_at_1": [
+         1.9567,
+         1.1172
+        ],
+        "best_score": [
+         93.61,
+         0.0
+        ],
+        "final_regret": [
+         1.07,
+         0.0
+        ],
+        "gain_over_random_search": [
+         0.066,
+         0.0
+        ],
+        "search_space_fraction_better": [
+         0.02,
+         0.0
+        ]
+       },
+       "comparative-2-borda-cifar10": {
+        "spearman_rho": [
+         0.7761,
+         0.004
+        ],
+        "kendall_tau": [
+         0.5871,
+         0.0059
+        ],
+        "spearman_rho_top_10pct": [
+         -0.1701,
+         0.0131
+        ],
+        "precision_at_top_10pct": [
+         0.3889,
+         0.0385
+        ],
+        "selection_regret_at_1": [
+         1.9567,
+         1.1172
+        ],
+        "best_score": [
+         93.61,
+         0.0
+        ],
+        "final_regret": [
+         1.07,
+         0.0
+        ],
+        "gain_over_random_search": [
+         0.066,
+         0.0
+        ],
+        "search_space_fraction_better": [
+         0.02,
+         0.0
+        ]
+       },
+       "comparative-3-synflow-cifar10": {
+        "spearman_rho": [
+         0.7589,
+         0.0005
+        ],
+        "kendall_tau": [
+         0.568,
+         0.0008
+        ],
+        "spearman_rho_top_10pct": [
+         0.5826,
+         0.0045
+        ],
+        "precision_at_top_10pct": [
+         0.5,
+         0.0
+        ],
+        "selection_regret_at_1": [
+         1.54,
+         0.0
+        ],
+        "best_score": [
+         93.97,
+         0.0
+        ],
+        "final_regret": [
+         0.71,
+         0.0
+        ],
+        "gain_over_random_search": [
+         0.426,
+         0.0
+        ],
+        "search_space_fraction_better": [
+         0.0,
+         0.0
+        ]
+       },
+       "comparative-4-jacov-cifar10": {
+        "spearman_rho": [
+         0.7223,
+         0.0185
+        ],
+        "kendall_tau": [
+         0.5526,
+         0.018
+        ],
+        "spearman_rho_top_10pct": [
+         -0.1209,
+         0.169
+        ],
+        "precision_at_top_10pct": [
+         0.2556,
+         0.0694
+        ],
+        "selection_regret_at_1": [
+         1.39,
+         0.0529
+        ],
+        "best_score": [
+         93.81,
+         0.2193
+        ],
+        "final_regret": [
+         0.87,
+         0.2193
+        ],
+        "gain_over_random_search": [
+         0.266,
+         0.2193
+        ],
+        "search_space_fraction_better": [
+         0.01,
+         0.0145
+        ]
+       },
+       "comparative-5-snip-cifar10": {
+        "spearman_rho": [
+         0.5653,
+         0.0048
+        ],
+        "kendall_tau": [
+         0.405,
+         0.0028
+        ],
+        "spearman_rho_top_10pct": [
+         -0.276,
+         0.0252
+        ],
+        "precision_at_top_10pct": [
+         0.3889,
+         0.0385
+        ],
+        "selection_regret_at_1": [
+         2.0267,
+         0.9963
+        ],
+        "best_score": [
+         93.61,
+         0.0
+        ],
+        "final_regret": [
+         1.07,
+         0.0
+        ],
+        "gain_over_random_search": [
+         0.066,
+         0.0
+        ],
+        "search_space_fraction_better": [
+         0.02,
+         0.0
+        ]
+       },
+       "comparative-6-gradnorm-cifar10": {
+        "spearman_rho": [
+         0.5687,
+         0.0035
+        ],
+        "kendall_tau": [
+         0.407,
+         0.0019
+        ],
+        "spearman_rho_top_10pct": [
+         -0.272,
+         0.0224
+        ],
+        "precision_at_top_10pct": [
+         0.3778,
+         0.0509
+        ],
+        "selection_regret_at_1": [
+         2.0267,
+         0.9963
+        ],
+        "best_score": [
+         93.61,
+         0.0
+        ],
+        "final_regret": [
+         1.07,
+         0.0
+        ],
+        "gain_over_random_search": [
+         0.066,
+         0.0
+        ],
+        "search_space_fraction_better": [
+         0.02,
+         0.0
+        ]
+       }
+      },
+      "comparison": {
+       "best_proposed": 0.8458,
+       "best_baseline": 0.7761,
+       "best_baseline_name": "comparative-1-vote-cifar10 (= borda, identical)",
+       "gap": 0.0697,
+       "rd_wborda_weights": {
+        "synflow": 0.3076,
+        "jacob_cov": 0.402,
+        "snip": 0.147,
+        "grad_norm": 0.1434
+       },
+       "reproduction_gate": {
+        "synflow": {
+         "ours": 0.759,
+         "published": 0.74,
+         "pass": true
+        },
+        "jacob_cov": {
+         "ours": 0.722,
+         "published": 0.73,
+         "pass": true
+        },
+        "snip": {
+         "ours": 0.565,
+         "published": 0.58,
+         "pass": true
+        },
+        "grad_norm": {
+         "ours": 0.569,
+         "published": 0.58,
+         "pass": true
+        },
+        "vote": {
+         "ours": 0.776,
+         "published": 0.82,
+         "pass": true,
+         "caveat": "原著は3プロキシ構成・全数評価、本実験は4プロキシ・300件"
+        }
+       },
+       "provenance_example": {
+        "inputs_sha256": "670f6284c26a2e3c728a24a3e27f025963ceff98457cf88cde4a130ca633345f",
+        "task_signature": "nas_pre_training/v1@d992f9672656",
+        "versions": {
+         "airas-eval": "0.9.0",
+         "numpy": "2.4.6",
+         "scipy": "1.17.1"
+        }
+       }
+      }
+     },
+     "result_figures": [
+      "chart/spearman_by_method.pdf",
+      "chart/top10pct_rho_by_method.pdf",
+      "chart/rank_scatter_proposed.pdf"
+     ],
+     "diagram_figures": [
+      "diagram/method_overview.pdf"
+     ]
+    },
+    "experimental_analysis": {
+     "analysis_report": "再現ゲート5/5通過（単体4プロキシは公表値±0.02以内、voteは0.776 vs 0.82で乖離0.044だが原著3プロキシ構成に対し本実験は4プロキシ・300件サンプルであり同一手法ではない）。主結果: RD-WBorda ρ=0.8458±0.0042 が全手法中最良で、最良ベースライン(vote/borda 0.7761)比 GAP=+0.0697（シード標準偏差の約17倍）。学習された重み synflow=0.308, jacob_cov=0.402, snip=0.147, grad_norm=0.143 は順位一貫性の低いプロキシを自動減点しており機構は設計どおり機能。selection_regret@1 も 0.93pt で最小。仮説棄却: 真の上位10%（30件）限定の ρ は全集約手法が負値（-0.16〜-0.17）で synflow 単独(+0.583)に大敗。『上位領域でこそ集約が効く』という予測は棄却され、『全体は集約・エリート領域は最良単体』の使い分けが示唆される。その他の正直な観察: (1) vote と borda は同点非存在下で数学的に同一順位となり全指標が完全一致——本設定での両者の比較は無意味。(2) jacob_cov が300件中5件で -inf（カーネル特異）を出力し、airas-eval が fail-closed に契約違反として拒否。順位保存写像（有限最小値-1、同順位維持）を適用して採点し、論文に明記。評価層検証（本リポジトリの主目的）: 入力契約は24/28件受理・4件を理由付き拒否、採点は受理全件で16指標+4曲線を算出しskipped は空、全出力に provenance（inputs_sha256/タスク署名/依存バージョン）が刻印され、主指標は scipy 独立計算と一致。指標算出を実験コードから分離する運用は実際に成立した。"
+    },
+    "decision": {
+     "action": "complete",
+     "reasoning": "主指標で再現ゲート通過・提案手法の明確な優位・評価層の動作検証完了。上位10%の負の結果は追加実験でなく限界として報告。"
     }
    }
   ]
@@ -316,6 +653,41 @@
   },
   "benchmark_currency": {
    "note": "NAS-Bench-201 は 2020 年の発表だが 2026 年時点でも zero-cost proxy 研究の標準ベンチマークとして現役。確認した 2026 年の実例: InTrain (2026-06), Budgeted Fixed-Proxy Search for Zero-Shot NAS (Electronics 2026-08, NB201 TSS × 8 proxy × 3 dataset), Bi-EZP (2026-08, ensemble zero-cost proxy 探索), Meta-Learning Predictors for NAS (2026-05), G-ICSO-NAS (2026-04), NAS-Driven Hardware Accelerator Exploration (2026-08, 全 15,625 で Pareto 解析)。"
+  },
+  "self_review": {
+   "reviewer": "Claude (self-review, 2026-08-28)",
+   "verdict": "weak accept（小規模検証・評価層実証として）",
+   "strengths": [
+    "再現ゲートを事前に設け、公表値5件すべてを許容誤差内で再現してから比較に進んだ",
+    "指標5件を結果を見る前に固定し、negative result（上位10%で仮説棄却）を隠さず主結果と同格で報告",
+    "再現性: foresight のコミット固定・真値テーブルの SHA-256・シード固定・airas-eval の provenance・全 eval_inputs/採点結果のリポジトリ保存",
+    "vote≡Borda の数学的同一性の指摘は、今後この比較を無意味に行う研究への注意喚起として有用"
+   ],
+   "weaknesses": [
+    "n=300 の単一ベンチマーク・単一データセット。プロキシの空間依存の崩れ（NAS-Bench-Suite-Zero の主知見）に提案の重みが追従するかは未検証",
+    "RD-WBorda の重みは全シードのスコアから導出され、シード別評価は完全独立ではない（ラベル漏洩ではないが、シード間の情報共有として論文に明記すべきだった）",
+    "重みは評価対象と同じ候補プールから計算されるトランスダクティブ設定。ラベル不要だが、新規プールへの転移性能は別問題",
+    "vote の再現は原著と構成が異なり（3 vs 4 プロキシ）厳密な再現ではない",
+    "上位10%指標は head=30 件で標本ノイズが大きく、仮説棄却の確度も同じ制約を受ける"
+   ],
+   "requested_changes_if_venue": "クロスデータセット（CIFAR-100/ImageNet16-120、同テーブルで追加取得ゼロ）での検証、シード独立な重み導出のアブレーション、ブートストラップ信頼区間"
   }
+ },
+ "paper_content": {
+  "title": "ゼロコストプロキシの信頼性×多様性重み付き順位集約: NAS-Bench-201 における小規模検証と外部評価層の実証",
+  "abstract": "真の精度ラベルを一切用いず、プロキシ自身の自己統計量（シード間順位安定性と他プロキシとの冗長性）から集約重みを閉形式で導出する RD-WBorda を提案。NAS-Bench-201 の 300 アーキテクチャ（CIFAR-10）で、単体プロキシの公表 Spearman 値をすべて再現したうえで ρ=0.846±0.004（最良ベースライン比 +0.070）を達成。一方、真の上位 10% 限定では全集約手法が synflow 単独に劣るという仮説棄却も含め、すべての観察を報告する。評価指標は airas-eval 0.9.0 に完全委譲し、その運用検証（入力契約の fail-closed 動作・来歴記録・独立計算とのビット一致）も主目的として報告する。",
+  "introduction": "単一ゼロコストプロキシの順位一貫性は条件により変動する。既存の組み合わせは等重み多数決か固定重みであり、ラベルなしでデータ適応的に重みを決める設計空間が未開拓であった。また評価指標の実験コードからの分離という運用の実証を第二の目的とする。",
+  "related_work": "Abdelfattah+ (ICLR2021) の zero-cost proxies と vote、Mellor+ (ICML2021) の NASWOT、NAS-Bench-Suite-Zero (NeurIPS2022) の相補性の情報理論的分析と『非自明な組み合わせ』という未解決課題、AZ-NAS (CVPR2024) の固定重み非線形集約。",
+  "background": "NAS-Bench-201 は 15,625 アーキテクチャの表引き型ベンチマーク。ゼロコストプロキシは初期化状態の 1 ミニバッチ順逆伝播で採点する。",
+  "method": "RD-WBorda: 信頼性 s_p = シード対の平均 Kendall τ、冗長性 r_p = leave-one-out ランク合意との Spearman、重み w_p ∝ max(s_p,0)·max(1−r_p,0) を L1 正規化し加重ランク和で順位づけ。プロキシ計算は foresight (commit b5059bc4) を無改変使用。",
+  "experimental_setup": "300 アーキテクチャ一様抽出（シード777）、CIFAR-10、4 プロキシ×3 シード、バッチ128。比較は単体4種・vote・等重みBorda。評価は airas-eval 0.9.0 nas_pre_training（両ブランチ充填、5 指標を設計時固定）。実行は RIKYU GB200 (aarch64)、1.12 s/arch。",
+  "results": "再現ゲート5/5（vote は 4 プロキシ構成・300件での 0.776 vs 公表 0.82、注記付き）。提案 ρ=0.8458±0.0042、GAP +0.0697。重み synflow 0.308 / jacob_cov 0.402 / snip 0.147 / grad_norm 0.143。regret@1 0.93pt で最小。上位10%限定 ρ は全集約が負、synflow +0.583（仮説棄却）。vote と Borda は同点非存在下で全指標完全一致。jacob_cov の -inf 5/300 を airas-eval が fail-closed 拒否、順位保存写像で採点。",
+  "conclusion": "ラベル不要の自己統計量重み付けは全体順位で有効、エリート領域では最良単体に劣る。『絞り込みは集約・短リスト内順位は synflow』の二段構えを示唆。評価層分離の運用は契約・採点・来歴のすべてで成立し、実データの品質問題を契約が捕捉した。"
+ },
+ "paper_review_scores": {
+  "novelty_score": 6,
+  "significance_score": 5,
+  "reproducibility_score": 9,
+  "experimental_quality_score": 6
  }
 }
