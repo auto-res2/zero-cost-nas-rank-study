@@ -602,12 +602,16 @@
  "additional_data": {
   "evaluation_layer": {
    "package": "airas-eval",
-   "version": "0.9.0",
+   "version": "0.10.0 (initial scoring 0.9.0; re-scored, all metrics identical)",
    "task_type": "nas_pre_training",
    "task_signature": "nas_pre_training/v1@d992f9672656",
    "verified_standalone": true,
    "note": "合成データで validate と score を端から端まで確認済み。16 スカラー指標 + 4 曲線が算出され skipped は空。出力に provenance（inputs_sha256 / task_signature / airas-eval・numpy・scipy の解決済みバージョン）が刻まれることを確認した。",
-   "aggregate_verified": true
+   "aggregate_verified": true,
+   "ci95_spearman_proposed": [
+    0.8352,
+    0.8563
+   ]
   },
   "benchmark_table": {
    "source": "https://raw.githubusercontent.com/automl/naslib/zerocost/naslib/data/nb201_all.pickle",

@@ -788,7 +788,7 @@
     "inputs_sha256": "2da83ff9067a3082f1a213493cbc13879e4b78e3df39811bf1565f90aeb91a3b",
     "task_signature": "nas_pre_training/v1@d992f9672656",
     "versions": {
-      "airas-eval": "0.9.0",
+      "airas-eval": "0.10.0",
       "numpy": "2.4.6",
       "scipy": "1.17.1"
     }
