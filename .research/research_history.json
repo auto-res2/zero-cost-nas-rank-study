@@ -606,7 +606,8 @@
    "task_type": "nas_pre_training",
    "task_signature": "nas_pre_training/v1@d992f9672656",
    "verified_standalone": true,
-   "note": "合成データで validate と score を端から端まで確認済み。16 スカラー指標 + 4 曲線が算出され skipped は空。出力に provenance（inputs_sha256 / task_signature / airas-eval・numpy・scipy の解決済みバージョン）が刻まれることを確認した。"
+   "note": "合成データで validate と score を端から端まで確認済み。16 スカラー指標 + 4 曲線が算出され skipped は空。出力に provenance（inputs_sha256 / task_signature / airas-eval・numpy・scipy の解決済みバージョン）が刻まれることを確認した。",
+   "aggregate_verified": true
   },
   "benchmark_table": {
    "source": "https://raw.githubusercontent.com/automl/naslib/zerocost/naslib/data/nb201_all.pickle",
@@ -670,7 +671,11 @@
     "vote の再現は原著と構成が異なり（3 vs 4 プロキシ）厳密な再現ではない",
     "上位10%指標は head=30 件で標本ノイズが大きく、仮説棄却の確度も同じ制約を受ける"
    ],
-   "requested_changes_if_venue": "クロスデータセット（CIFAR-100/ImageNet16-120、同テーブルで追加取得ゼロ）での検証、シード独立な重み導出のアブレーション、ブートストラップ信頼区間"
+   "requested_changes_if_venue": "クロスデータセット（CIFAR-100/ImageNet16-120、同テーブルで追加取得ゼロ）での検証、シード独立な重み導出のアブレーション、ブートストラップ信頼区間",
+   "post_review_fixes": [
+    "指摘『シード間集計が評価層の外』は解消: airas-eval の aggregate サブコマンドで全 7 手法の mean±std を評価層内で再算出し（evaluation/aggregate.json、provenance 付き）、手計算と完全一致を確認",
+    "compare（対応のある有意差検定）は nas_pre_training が per-example スコアを持たないため評価層が理由付きで拒否——タスク設計上の制約として論文に明記"
+   ]
   }
  },
  "paper_content": {
