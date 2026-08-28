@@ -1,0 +1,140 @@
+# 論文プレースホルダ対応表  (main.tex, commit HEAD)
+
+\airasval（JSON=values.json 由来・来歴検証済み）: 77 箇所
+
+## 概要  (5)
+  L22   rdwborda_rho             -> 0.8458
+  L22   rdwborda_rho_std         -> 0.0042
+  L22   vote_rho                 -> 0.7761
+  L22   gap_rho                  -> 0.0697
+  L22   synflow_rho10            -> 0.583
+
+## 実験設定  (1)
+  L56   oracle_best              -> 94.68
+
+## 再現ゲート：公表値との照合  (1)
+  L69   vote_rho                 -> 0.7761
+
+## 再現ゲート：公表値との照合 [表]  (10)
+  L79   synflow_rho              -> 0.7589
+  L79   synflow_rho_std          -> 0.0005
+  L80   jacov_rho                -> 0.7223
+  L80   jacov_rho_std            -> 0.0185
+  L81   snip_rho                 -> 0.5653
+  L81   snip_rho_std             -> 0.0048
+  L82   gradnorm_rho             -> 0.5687
+  L82   gradnorm_rho_std         -> 0.0035
+  L83   vote_rho                 -> 0.7761
+  L83   vote_rho_std             -> 0.0040
+
+## 主結果：集約手法の比較  (8)
+  L92   rdwborda_rho             -> 0.8458
+  L92   rdwborda_rho_std         -> 0.0042
+  L92   vote_rho                 -> 0.7761
+  L92   gap_rho                  -> 0.0697
+  L92   rdwborda_regret1         -> 0.93
+  L92   rdwborda_regret1_std     -> 0.45
+  L92   vote_regret1             -> 1.96
+  L92   vote_regret1_std         -> 1.12
+
+## 主結果：集約手法の比較 [表]  (42)
+  L102  rdwborda_rho             -> 0.8458
+  L102  rdwborda_rho_std         -> 0.0042
+  L102  rdwborda_tau             -> 0.663
+  L102  rdwborda_rho10           -> -0.162
+  L102  rdwborda_prec10          -> 0.378
+  L102  rdwborda_regret1         -> 0.93
+  L103  vote_rho                 -> 0.7761
+  L103  vote_rho_std             -> 0.0040
+  L103  vote_tau                 -> 0.587
+  L103  vote_rho10               -> -0.170
+  L103  vote_prec10              -> 0.389
+  L103  vote_regret1             -> 1.96
+  L104  borda_rho                -> 0.7761
+  L104  borda_rho_std            -> 0.0040
+  L104  borda_tau                -> 0.587
+  L104  borda_rho10              -> -0.170
+  L104  borda_prec10             -> 0.389
+  L104  borda_regret1            -> 1.96
+  L105  synflow_rho              -> 0.7589
+  L105  synflow_rho_std          -> 0.0005
+  L105  synflow_tau              -> 0.568
+  L105  synflow_rho10            -> 0.583
+  L105  synflow_prec10           -> 0.500
+  L105  synflow_regret1          -> 1.54
+  L106  jacov_rho                -> 0.7223
+  L106  jacov_rho_std            -> 0.0185
+  L106  jacov_tau                -> 0.553
+  L106  jacov_rho10              -> -0.121
+  L106  jacov_prec10             -> 0.256
+  L106  jacov_regret1            -> 1.39
+  L107  snip_rho                 -> 0.5653
+  L107  snip_rho_std             -> 0.0048
+  L107  snip_tau                 -> 0.405
+  L107  snip_rho10               -> -0.276
+  L107  snip_prec10              -> 0.389
+  L107  snip_regret1             -> 2.03
+  L108  gradnorm_rho             -> 0.5687
+  L108  gradnorm_rho_std         -> 0.0035
+  L108  gradnorm_tau             -> 0.407
+  L108  gradnorm_rho10           -> -0.272
+  L108  gradnorm_prec10          -> 0.378
+  L108  gradnorm_regret1         -> 2.03
+
+## 仮説に反した結果：上位 10\%領域では集約が機能しない  (4)
+  L128  rdwborda_rho10           -> -0.162
+  L128  vote_rho10               -> -0.170
+  L128  synflow_rho10            -> 0.583
+  L128  synflow_prec10           -> 0.500
+
+## 評価層（airas-eval）の検証結果  (3)
+  L143  rdwborda_rho_ci_low      -> 0.835
+  L143  rdwborda_rho_ci_high     -> 0.856
+  L143  vote_rho                 -> 0.7761
+
+## 結論  (3)
+  L149  rdwborda_rho             -> 0.8458
+  L149  rdwborda_rho_std         -> 0.0042
+  L149  gap_rho                  -> 0.0697
+
+\unverified（JSON 外・要レビュー）: 28 箇所
+
+## 概要  (4)
+  L22   0.74
+  L22   0.73
+  L22   0.58
+  L22   0.58
+
+## 関連研究  (5)
+  L33   0.74
+  L33   0.73
+  L33   0.58
+  L33   0.58
+  L35   0.82
+
+## 実験設定  (2)
+  L56   94.37
+  L64   1.12
+
+## 再現ゲート：公表値との照合  (2)
+  L69   0.82
+  L69   0.044
+
+## 再現ゲート：公表値との照合 [表]  (10)
+  L79   0.74
+  L79   $+0.019$
+  L80   0.73
+  L80   $-0.008$
+  L81   0.58
+  L81   $-0.015$
+  L82   0.58
+  L82   $-0.011$
+  L83   0.82
+  L83   $-0.044$
+
+## 主結果：集約手法の比較  (5)
+  L92   17
+  L92   0.308
+  L92   0.402
+  L92   0.147
+  L92   0.143
