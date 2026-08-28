@@ -680,6 +680,28 @@
     "指摘『シード間集計が評価層の外』は解消: airas-eval の aggregate サブコマンドで全 7 手法の mean±std を評価層内で再算出し（evaluation/aggregate.json、provenance 付き）、手計算と完全一致を確認",
     "compare（対応のある有意差検定）は nas_pre_training が per-example スコアを持たないため評価層が理由付きで拒否——タスク設計上の制約として論文に明記"
    ]
+  },
+  "paper_values_validation": {
+   "date": "2026-08-28",
+   "verify_latex": {
+    "ok": true,
+    "page_count": 7,
+    "paper_values_ok": true
+   },
+   "provenance": {
+    "status": "verified",
+    "backing_run": "36e9ef26-ba3d-471f-85ab-c41afab8abe6",
+    "backing_commit": "412bf00b33e177fc9971d23f2ae22f75e561c5e5",
+    "detail": "全 7 results ディレクトリが Seyval 保存出力とバイト一致"
+   },
+   "pipeline": "既存 full 7 run の eval_inputs を inputs_from_runs で復元 → Seyval 上で airas-eval 0.10.0 が score/aggregate → metrics.json を run 成果物として保存 → import → compute_paper_values(54宣言) → \\airasval マクロ 77 箇所 / \\unverified 28 箇所 → verify",
+   "failures_on_the_way": [
+    "bash -lc: プラットフォームの argv 再結合でシェル変数が事前展開・ログインシェルが PATH をリセット (exit 127)",
+    "command_args 省略: user_dockerfile_path 時は解析 entry_point でなくイメージ CMD (bash) が走り即終了",
+    "score_all.py の glob 親ディレクトリ 1 段ミス (FileNotFoundError)",
+    "復元された無垢の eval_inputs に jacob_cov の -inf が残存 → run 内サニタイズ（順位保存写像）を実装して解決"
+   ],
+   "host_vs_platform": "in-platform 採点 42/46 ファイルがホスト計算とバイト一致（差分は jacov サニタイズ成果物 4 件の追加のみ）"
   }
  },
  "paper_content": {
