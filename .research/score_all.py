@@ -25,7 +25,7 @@ def run(argv):
 
 def main() -> int:
     run_dirs = sorted(
-        d.parent for d in RESULTS.glob("*/eval_inputs/nas_pre_training.json")
+        d.parent.parent for d in RESULTS.glob("*/eval_inputs/nas_pre_training.json")
     )
     if not run_dirs:
         print("no eval_inputs found under", RESULTS, flush=True)
